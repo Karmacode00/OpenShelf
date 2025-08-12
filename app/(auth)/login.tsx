@@ -1,87 +1,134 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import { Colors } from '@constants/Colors';
+import { useColorScheme } from '@hooks/useColorScheme';
 
 import { useAuth } from '@/contexts/AuthContext';
 
-const LoginScreen = () => {
+export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, error } = useAuth();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
-      return;
-    }
+  const scheme = useColorScheme() ?? 'light';
+  const C = Colors[scheme];
+  const s = getStyles(C);
 
+  const handleLogin = async () => {
+    if (!email || !password) return Alert.alert('Error', 'Por favor completa todos los campos');
     try {
       await login(email, password);
-      router.replace('/home');
-    } catch (e) {
+      router.replace('/(tabs)/home');
+    } catch {
       Alert.alert('Error', error || 'Hubo un error al iniciar sesión');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Iniciar Sesión</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.background }}>
+      <View style={s.container}>
+        <View>
+          <Text style={s.title}>Iniciar Sesión</Text>
+          <Text style={s.description}>
+            Por favor ingresa tu email y contraseña para acceder a tu cuenta
+          </Text>
+        </View>
+        <Card>
+          <Text style={s.label}>Email</Text>
+          <TextInput
+            placeholder="usuario@email.cl"
+            placeholderTextColor={scheme === 'light' ? '#024059' : '#7AA5AB'}
+            value={email}
+            onChangeText={setEmail}
+            style={s.input}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
 
-      <TextInput
-        placeholder="Correo electrónico"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
+          <Text style={s.label}>Contraseña</Text>
+          <TextInput
+            placeholder="••••••••"
+            placeholderTextColor={scheme === 'light' ? '#024059' : '#7AA5AB'}
+            value={password}
+            onChangeText={setPassword}
+            style={s.input}
+            secureTextEntry
+          />
+        </Card>
+        <View style={s.buttonGroup}>
+          <Pressable onPress={() => Alert.alert('Resetear contraseña')} style={s.link}>
+            <Text style={s.linkText}>Olvidaste tu contraseña?</Text>
+          </Pressable>
+          <Button label="Ingresar" variant="primary" onPress={handleLogin} />
 
-      <TextInput
-        placeholder="Contraseña"
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-        secureTextEntry
-      />
-
-      <Button title="Ingresar" onPress={handleLogin} />
-
-      <TouchableOpacity onPress={() => router.push('/register')} style={styles.link}>
-        <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
-      </TouchableOpacity>
-    </View>
+          <Button
+            label="Registrarse"
+            variant="secondary"
+            onPress={() => router.push('/register')}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
   );
-};
+}
 
-export default LoginScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  input: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  link: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#3498db',
-  },
-});
+const getStyles = (C: typeof Colors.light) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+      padding: 20,
+      justifyContent: 'space-evenly',
+    },
+    title: {
+      fontSize: 32,
+      marginBottom: 16,
+      fontWeight: 'bold',
+      color: C.title,
+    },
+    description: {
+      color: C.text,
+      fontSize: 16,
+    },
+    label: {
+      fontWeight: '700',
+      marginBottom: 8,
+      color: C.textContrast,
+    },
+    input: {
+      backgroundColor: C.inputBg,
+      color: C.inputText,
+      borderColor: C.border,
+      borderWidth: 1,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      borderRadius: 12,
+      marginBottom: 16,
+    },
+    buttonGroup: {
+      flexDirection: 'column',
+      gap: 10,
+    },
+    primaryBtn: {
+      backgroundColor: C.buttonPrimary,
+      paddingVertical: 16,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    primaryBtnText: { color: C.buttonPrimaryText, fontWeight: '700', fontSize: 20 },
+    secondaryBtn: {
+      backgroundColor: C.buttonSecondary,
+      paddingVertical: 16,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    secondaryBtnText: { color: C.buttonSecondaryText, fontWeight: '700', fontSize: 20 },
+    link: { alignItems: 'flex-end' },
+    linkText: { color: C.tint, fontWeight: '700' },
+  });
