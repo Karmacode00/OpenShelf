@@ -1,13 +1,14 @@
 // app/(tabs)/home.tsx
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@constants/Colors';
 import { useColorScheme } from '@hooks/useColorScheme';
 
 import ActionCard from '@/components/ActionCard';
+import NotificationBell from '@/components/NotificationBell';
 import SearchBar from '@/components/SearchBar';
 
 export default function HomeScreen() {
@@ -19,23 +20,28 @@ export default function HomeScreen() {
 
   const [query, setQuery] = useState('');
 
+  const handleSearch = () => {
+    const q = query.trim();
+    if (!q) return;
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+    setQuery('');
+    Keyboard.dismiss();
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.background }}>
       <ScrollView contentContainerStyle={s.container}>
-        <Text style={s.title}>Explorar</Text>
-
-        {/* Buscar */}
-        <View style={{ marginBottom: 20 }}>
-          <SearchBar
-            value={query}
-            onChangeText={setQuery}
-            onSubmit={() => {
-              /* navegar a resultados */
-            }}
-          />
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          <Text style={s.title}>Explorar</Text>
+          <NotificationBell onPress={() => router.push('/notifications')} />
         </View>
 
-        {/* Acciones rápidas */}
+        <View style={{ marginBottom: 20 }}>
+          <SearchBar value={query} onChangeText={setQuery} onSubmit={handleSearch} />
+        </View>
+
         <Text style={s.sectionTitle}>Acciones rápidas</Text>
         <View style={{ gap: 12 }}>
           <ActionCard

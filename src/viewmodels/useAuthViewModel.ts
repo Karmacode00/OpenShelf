@@ -10,6 +10,8 @@ import { useEffect, useState } from 'react';
 
 import { auth } from '../services/firebase';
 
+import { upsertCurrentUserProfile } from '@/services/userProfile';
+
 export const useAuthViewModel = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +44,13 @@ export const useAuthViewModel = () => {
       const currentUser = auth.currentUser;
       if (currentUser) {
         await updateProfile(currentUser, { displayName: name });
+
+        await upsertCurrentUserProfile({
+          uid: currentUser.uid,
+          displayName: name,
+          email: currentUser.email ?? null,
+          photoURL: currentUser.photoURL ?? null,
+        });
       }
       setError(null);
     } catch (err: any) {

@@ -12,8 +12,8 @@ type Props = {
 };
 
 export default function ActionCard({ title, subtitle, icon = 'add-circle', onPress }: Props) {
-  const card = useThemeColor({}, 'card'); // bloque oscuro
-  const accent = useThemeColor({}, 'accent'); // círculo celeste
+  const card = useThemeColor({}, 'card');
+  const accent = useThemeColor({}, 'accent');
   const textContrast = useThemeColor({}, 'textContrast');
 
   return (

@@ -2,12 +2,18 @@
 
 # dependencies
 node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+android/
+ios/
+.expo-shared/
 
 # Native
 .kotlin/
@@ -31,9 +37,58 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
 .env*.local
 
 # typescript
 *.tsbuildinfo
 
-.vscode
+# VSCode
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# Coverage
+coverage/
+*.lcov
+
+# Build output
+build/
+out/
+tmp/
+temp/
+.cache/
+.cypress/
+
+# Test
+jest-test-results.json
+
+# Misc
+*.swp
+*.swo
+*.tmp
+*.bak
+*.old
+
+# System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDEs
+.idea/
+*.iml
+
+# Python (if any scripts)
+__pycache__/
+*.pyc
+*.pyo
+
+# Others
+*.sublime-workspace
+*.sublime-project
+google-services.json

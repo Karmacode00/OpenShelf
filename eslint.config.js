@@ -6,7 +6,7 @@ const pluginPrettier = require('eslint-plugin-prettier');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/**', 'functions/**'],
     plugins: {
       prettier: pluginPrettier,
     },

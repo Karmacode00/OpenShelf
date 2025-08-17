@@ -1,0 +1,151 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* =========================
+       Helpers reutilizables
+    ========================== */
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    // Útil en /books
+    function isOwner() {
+      return isAuthed() && resource.data.ownerId == request.auth.uid;
+    }
+
+    function isBorrower() {
+      return isAuthed() && resource.data.borrowerId == request.auth.uid;
+    }
+
+    function validStatus(s) {
+      return s in ['available', 'requested', 'loaned'];
+    }
+
+    /* =========================
+       Colección de Libros
+       /books/{bookId}
+    ========================== */
+    match /books/{bookId} {
+      // Leer: cualquier usuario autenticado
+      allow get, list: if isAuthed();
+
+      // Crear: el creador debe ser el owner y estado inicial 'available'
+      allow create: if isAuthed()
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.title is string
+                    && request.resource.data.author is string
+                    && request.resource.data.imageUrl is string
+                    && validStatus(request.resource.data.status)
+                    && request.resource.data.status == 'available'
+                    // borrowerId ausente o nulo
+                    && (
+                      !request.resource.data.keys().hasAny(['borrowerId']) ||
+                      request.resource.data.borrowerId == null
+                    );
+
+      // Borrar: solo el dueño
+      allow delete: if isOwner();
+
+      // Actualizar: transiciones permitidas + edición de metadatos del dueño
+      allow update: if isAuthed()
+                    && validStatus(request.resource.data.status)
+                    // ownerId es inmutable
+                    && request.resource.data.ownerId == resource.data.ownerId
+                    && (
+                      // 1) El DUEÑO puede editar metadatos sin tocar estado/borrower,
+                      //    rechazar solicitud o aprobar préstamo.
+                      (
+                        isOwner() && (
+                          // 1.a) Solo metadatos (title/author/imageUrl)
+                          (
+                            request.resource.data.status == resource.data.status &&
+                            request.resource.data.borrowerId == resource.data.borrowerId
+                          )
+                          ||
+                          // 1.b) Rechazar: requested -> available (limpia borrower)
+                          (
+                            resource.data.status == 'requested' &&
+                            request.resource.data.status == 'available' &&
+                            (
+                              !request.resource.data.keys().hasAny(['borrowerId']) ||
+                              request.resource.data.borrowerId == null
+                            )
+                          )
+                          ||
+                          // 1.c) Aprobar: requested -> loaned (mantiene borrower)
+                          (
+                            resource.data.status == 'requested' &&
+                            request.resource.data.status == 'loaned' &&
+                            request.resource.data.borrowerId == resource.data.borrowerId &&
+                            request.resource.data.borrowerId is string
+                          )
+                        )
+                      )
+                      ||
+                      // 2) El SOLICITANTE puede: cancelar (requested->available) o devolver (loaned->available)
+                      (
+                        isBorrower() && (
+                          // cancelar solicitud
+                          (
+                            resource.data.status == 'requested' &&
+                            request.resource.data.status == 'available' &&
+                            (
+                              !request.resource.data.keys().hasAny(['borrowerId']) ||
+                              request.resource.data.borrowerId == null
+                            )
+                          )
+                          ||
+                          // devolver libro
+                          (
+                            resource.data.status == 'loaned' &&
+                            request.resource.data.status == 'available' &&
+                            (
+                              !request.resource.data.keys().hasAny(['borrowerId']) ||
+                              request.resource.data.borrowerId == null
+                            )
+                          )
+                        )
+                      )
+                      ||
+                      // 3) Un usuario NO dueño puede solicitar: available -> requested (para sí mismo)
+                      (
+                        isAuthed() &&
+                        resource.data.ownerId != request.auth.uid &&
+                        resource.data.status == 'available' &&
+                        request.resource.data.status == 'requested' &&
+                        request.resource.data.borrowerId == request.auth.uid
+                      )
+                    );
+    }
+
+    /* ====================================
+       Usuarios y subcolecciones de cuenta
+       /users/{userId}
+       - pushTokens: tokens de notificaciones
+       - notifications: bandeja de notificaciones
+    ===================================== */
+    match /users/{userId} {
+      // Acceso al propio documento (si lo usas para perfil simple)
+      allow get, create, update, delete: if isAuthed() && request.auth.uid == userId;
+
+      // Tokens de notificación (cliente guarda/borrra sus tokens)
+      match /pushTokens/{tokenId} {
+        allow read, create, update, delete: if isAuthed() && request.auth.uid == userId;
+      }
+
+      // Bandeja de notificaciones
+      // - La Cloud Function usa Admin SDK (omite reglas) para crear notificaciones.
+      // - El usuario puede leerlas y marcar como leídas (update).
+      match /notifications/{notifId} {
+        allow read: if isAuthed() && request.auth.uid == userId;
+
+        // Crear desde cliente (opcional). Si solo las crea la Function, puede quedarse permitido igual.
+        allow create: if isAuthed() && request.auth.uid == userId;
+
+        // Actualizar/borrar desde el cliente (p.ej. unread -> false)
+        allow update, delete: if isAuthed() && request.auth.uid == userId;
+      }
+    }
+  }
+}

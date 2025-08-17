@@ -1,31 +1,52 @@
 import React from 'react';
-import { Pressable, PressableProps, StyleSheet, Text } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  PressableProps,
+  StyleSheet,
+  Text,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 
 import { Colors } from '@constants/Colors';
 import { useColorScheme } from '@hooks/useColorScheme';
 
 type Variant = 'primary' | 'secondary';
 
-interface ButtonProps extends PressableProps {
+interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
   variant?: Variant;
-  style?: PressableProps['style'];
+  loading?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
-export default function Button({ label, variant = 'primary', style, ...rest }: ButtonProps) {
+export default function Button({
+  label,
+  variant = 'primary',
+  loading = false,
+  disabled,
+  style,
+  ...rest
+}: ButtonProps) {
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
   const s = getStyles(C);
 
-  const base = variant === 'primary' ? s.primaryBtn : s.secondaryBtn;
+  const btnStyle = variant === 'primary' ? s.primaryBtn : s.secondaryBtn;
   const textStyle = variant === 'primary' ? s.primaryBtnText : s.secondaryBtnText;
+  const spinnerColor = variant === 'primary' ? C.buttonPrimaryText : C.buttonSecondaryText;
 
   const composedStyle: PressableProps['style'] =
-    typeof style === 'function' ? (state) => [base, style(state)] : [base, style];
+    typeof style === 'function' ? (state) => [btnStyle, style(state)] : [btnStyle, style];
 
   return (
-    <Pressable style={composedStyle} {...rest}>
-      <Text style={textStyle}>{label}</Text>
+    <Pressable style={composedStyle} disabled={disabled || loading} {...rest}>
+      {loading ? (
+        <ActivityIndicator size="small" color={spinnerColor} />
+      ) : (
+        <Text style={textStyle}>{label}</Text>
+      )}
     </Pressable>
   );
 }

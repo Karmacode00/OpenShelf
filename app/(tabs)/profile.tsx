@@ -37,39 +37,67 @@ export default function ProfileScreen() {
         </View>
 
         <Card style={s.cardBlock}>
-          <View style={s.itemRow}>
-            <View style={s.itemLeft}>
-              <Ionicons
-                name="bag-handle"
-                size={22}
-                color={C.textContrast}
-                style={{ marginRight: 12 }}
-              />
-              <View>
-                <Text style={s.itemTitle}>Mis Préstamos</Text>
-                <Text style={s.itemSub}>Información de los libros que te prestaron</Text>
+          <TouchableOpacity onPress={() => router.push('/my-loans')}>
+            <View style={s.itemRow}>
+              <View style={s.itemLeft}>
+                <Ionicons
+                  name="bag-handle"
+                  size={22}
+                  color={C.textContrast}
+                  style={{ marginRight: 12 }}
+                />
+                <View>
+                  <Text style={s.itemTitle}>Mis Préstamos</Text>
+                  <Text style={s.itemSub}>Información de los libros que haz solicitado</Text>
+                </View>
+              </View>
+              <View style={s.chevronBtn}>
+                <Ionicons name="chevron-forward" size={22} color={C.textContrast} />
               </View>
             </View>
-            <TouchableOpacity style={s.chevronBtn} onPress={() => router.push('/loans')}>
-              <Ionicons name="chevron-forward" size={22} color={C.textContrast} />
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
 
-          <View style={[s.itemRow, { marginTop: 18 }]}>
-            <View style={s.itemLeft}>
-              <Ionicons name="book" size={22} color={C.textContrast} style={{ marginRight: 12 }} />
-              <View>
-                <Text style={s.itemTitle}>Mis libros</Text>
-                <Text style={s.itemSub}>Detalles de tus libros</Text>
+          <TouchableOpacity onPress={() => router.push('/my-books')}>
+            <View style={[s.itemRow, { marginTop: 18 }]}>
+              <View style={s.itemLeft}>
+                <Ionicons
+                  name="book"
+                  size={22}
+                  color={C.textContrast}
+                  style={{ marginRight: 12 }}
+                />
+                <View>
+                  <Text style={s.itemTitle}>Mis libros</Text>
+                  <Text style={s.itemSub}>Detalles de tus libros</Text>
+                </View>
+              </View>
+              <View style={s.chevronBtn}>
+                <Ionicons name="chevron-forward" size={22} color={C.textContrast} />
               </View>
             </View>
-            <TouchableOpacity style={s.chevronBtn} onPress={() => router.push('/home')}>
-              <Ionicons name="chevron-forward" size={22} color={C.textContrast} />
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push('/profile-settings')}>
+            <View style={[s.itemRow, { marginTop: 18 }]}>
+              <View style={s.itemLeft}>
+                <Ionicons
+                  name="book"
+                  size={22}
+                  color={C.textContrast}
+                  style={{ marginRight: 12 }}
+                />
+                <View>
+                  <Text style={s.itemTitle}>Administrar perfil</Text>
+                  <Text style={s.itemSub}>Edita tu información y preferencias</Text>
+                </View>
+              </View>
+              <View style={s.chevronBtn}>
+                <Ionicons name="chevron-forward" size={22} color={C.textContrast} />
+              </View>
+            </View>
+          </TouchableOpacity>
         </Card>
 
-        {/* Botón cerrar sesión */}
         <View style={{ marginTop: 24 }}>
           <Button label="Cerrar sesión" variant="primary" onPress={logout} />
         </View>

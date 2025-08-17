@@ -1,12 +1,29 @@
 import { Slot, Stack } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { registerForPushAsync } from '@/services/push';
+import { upsertCurrentUserProfile } from '@/services/userProfile';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    (async () => {
+      if (user?.uid) {
+        await upsertCurrentUserProfile({
+          uid: user.uid,
+          displayName: user.displayName ?? null,
+          email: user.email ?? null,
+          photoURL: user.photoURL ?? null,
+        });
+
+        await registerForPushAsync(user.uid);
+      }
+    })().catch(console.warn);
+  }, [user?.uid]);
 
   if (loading) {
     return (
@@ -16,11 +33,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Redirecciona basado en el estado del usuario
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {user ? (
-        // Si está autenticado, carga las pantallas dentro de (tabs)
         <>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
@@ -29,7 +44,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
           />
         </>
       ) : (
-        // Si NO está autenticado, carga las pantallas dentro de (auth)
         <Stack.Screen name="(auth)" />
       )}
     </Stack>

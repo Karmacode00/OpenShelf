@@ -8,9 +8,15 @@ import { useThemeColor } from '@hooks/useThemeColor';
 
 import Button from '@/components/Button';
 import Card from '@/components/Card';
+import { useAuth } from '@/contexts/AuthContext';
+import { getBookRepository } from '@/di/container';
+import { addBookUseCase } from '@/domain/usecases/addBook';
 
 export default function AddBookScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const addBook = addBookUseCase(getBookRepository());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const bg = useThemeColor({}, 'background');
   const titleColor = useThemeColor({}, 'title');
@@ -47,13 +53,22 @@ export default function AddBookScreen() {
       Alert.alert('Faltan datos', 'Completa nombre, autor y agrega una foto.');
       return;
     }
-
-    // TODO: subir imagen y guardar registro en tu backend/Firestore
-    // const uploadedUrl = await uploadImage(imageUri)
-    // await saveBook({ name, author, imageUrl: uploadedUrl })
-
-    Alert.alert('Listo', 'Libro publicado con éxito.');
-    router.replace('/(tabs)/home');
+    try {
+      setIsSubmitting(true);
+      await addBook({
+        title: name.trim(),
+        author: author.trim(),
+        imageUri,
+        ownerId: user?.uid!,
+      });
+      Alert.alert('Listo', 'Libro publicado con éxito.');
+      router.replace('/(tabs)/home');
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Error', 'No se pudo publicar el libro.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -97,12 +112,24 @@ export default function AddBookScreen() {
             variant="primary"
             onPress={pickImage}
             style={{ marginTop: 8 }}
+            disabled={isSubmitting}
           />
         </Card>
 
         <View style={{ gap: 10 }}>
-          <Button label="Publicar libro" variant="primary" onPress={handleSubmit} />
-          <Button label="Cancelar" variant="secondary" onPress={() => router.back()} />
+          <Button
+            label="Publicar libro"
+            variant="primary"
+            onPress={handleSubmit}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          />
+          <Button
+            label="Cancelar"
+            variant="secondary"
+            onPress={() => router.back()}
+            disabled={isSubmitting}
+          />
         </View>
       </View>
     </SafeAreaView>

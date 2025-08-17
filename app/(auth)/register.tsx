@@ -18,7 +18,6 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // 🔹 tema (mismo patrón que Login)
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
   const s = getStyles(C);
