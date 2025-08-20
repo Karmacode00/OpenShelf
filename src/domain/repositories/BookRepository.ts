@@ -15,4 +15,6 @@ export interface BookRepository {
   getByBorrower(borrowerId: string): Promise<Book[]>;
   cancelRequest(bookId: string, borrowerId: string): Promise<void>;
   returnBook(bookId: string, borrowerId: string): Promise<void>;
+  acceptRequest(bookId: string, ownerId: string): Promise<void>;
+  rejectRequest(bookId: string, ownerId: string): Promise<void>;
 }

@@ -11,7 +11,6 @@ export async function registerForPushAsync(userId: string) {
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
   const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  console.log('Expo token:', token);
 
   await setDoc(
     doc(db, 'users', userId, 'pushTokens', token),

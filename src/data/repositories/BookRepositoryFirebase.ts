@@ -125,6 +125,7 @@ export class BookRepositoryFirebase implements BookRepository {
   }
 
   async requestBook(bookId: string, requesterId: string): Promise<void> {
+    console.log(`[requestBook] Solicitando libro ${bookId} para ${requesterId}`);
     const ref = doc(db, 'books', bookId);
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
@@ -182,6 +183,7 @@ export class BookRepositoryFirebase implements BookRepository {
         borrowerId: null,
         requestedAt: null,
         updatedAt: serverTimestamp(),
+        cancelledByBorrower: true,
       });
     });
   }
@@ -200,6 +202,40 @@ export class BookRepositoryFirebase implements BookRepository {
         status: 'available',
         borrowerId: null,
         returnedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  async acceptRequest(bookId: string, ownerId: string): Promise<void> {
+    const ref = doc(db, 'books', bookId);
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.data() as any;
+      if (!snap.exists) throw new Error('Libro no existe');
+      if (data.ownerId !== ownerId) throw new Error('No eres el dueño');
+      if (data.status !== 'requested') throw new Error('No está solicitado');
+
+      tx.update(ref, {
+        status: 'loaned',
+        updatedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  async rejectRequest(bookId: string, ownerId: string): Promise<void> {
+    const ref = doc(db, 'books', bookId);
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.data() as any;
+      if (!snap.exists) throw new Error('Libro no existe');
+      if (data.ownerId !== ownerId) throw new Error('No eres el dueño');
+      if (data.status !== 'requested') throw new Error('No está solicitado');
+
+      tx.update(ref, {
+        status: 'available',
+        borrowerId: null,
+        requestedAt: null,
         updatedAt: serverTimestamp(),
       });
     });

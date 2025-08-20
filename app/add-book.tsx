@@ -1,10 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useThemeColor } from '@hooks/useThemeColor';
+import { Colors } from '@constants/Colors';
 
 import Button from '@/components/Button';
 import Card from '@/components/Card';
@@ -13,20 +13,15 @@ import { getBookRepository } from '@/di/container';
 import { addBookUseCase } from '@/domain/usecases/addBook';
 
 export default function AddBookScreen() {
+  const scheme = useColorScheme() ?? 'light';
+  const C = Colors[scheme];
+
   const router = useRouter();
   const { user } = useAuth();
   const addBook = addBookUseCase(getBookRepository());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const bg = useThemeColor({}, 'background');
-  const titleColor = useThemeColor({}, 'title');
-  const text = useThemeColor({}, 'text');
-  const border = useThemeColor({}, 'border');
-  const inputBg = useThemeColor({}, 'inputBg');
-  const inputText = useThemeColor({}, 'inputText');
-  const placeholder = useThemeColor({ light: '#5D7378', dark: '#88A7AC' }, 'icon');
-
-  const s = getStyles({ bg, titleColor, text, border, inputBg, inputText });
+  const s = getStyles(C);
 
   const [name, setName] = useState('');
   const [author, setAuthor] = useState('');
@@ -72,7 +67,7 @@ export default function AddBookScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.background }}>
       <View style={s.container}>
         <Text style={s.title}>Agregar libro</Text>
 
@@ -82,7 +77,7 @@ export default function AddBookScreen() {
             value={name}
             onChangeText={setName}
             placeholder="Ej. Atomic Habits"
-            placeholderTextColor={placeholder}
+            placeholderTextColor={C.icon}
             style={s.input}
           />
 
@@ -91,7 +86,7 @@ export default function AddBookScreen() {
             value={author}
             onChangeText={setAuthor}
             placeholder="Ej. James Clear"
-            placeholderTextColor={placeholder}
+            placeholderTextColor={C.icon}
             style={s.input}
           />
 
@@ -103,7 +98,7 @@ export default function AddBookScreen() {
             </View>
           ) : (
             <View style={[s.imageWrap, s.imagePlaceholder]}>
-              <Text style={{ color: text, opacity: 0.6 }}>Sin imagen</Text>
+              <Text style={{ color: C.text, opacity: 0.6 }}>Sin imagen</Text>
             </View>
           )}
 
@@ -136,24 +131,17 @@ export default function AddBookScreen() {
   );
 }
 
-const getStyles = (C: {
-  bg: string;
-  titleColor: string;
-  text: string;
-  border: string;
-  inputBg: string;
-  inputText: string;
-}) =>
+const getStyles = (C: (typeof Colors)['light']) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: C.bg,
-      padding: 20,
+      backgroundColor: C.background,
+      paddingHorizontal: 20,
       gap: 16,
       justifyContent: 'space-between',
     },
-    title: { fontSize: 24, fontWeight: '700', color: C.titleColor, textAlign: 'left' },
-    label: { fontWeight: '700', marginBottom: 8, color: '#FFFFFF' },
+    title: { fontSize: 24, fontWeight: '700', color: C.title, textAlign: 'left' },
+    label: { fontWeight: '700', marginBottom: 8, color: C.textContrast },
     input: {
       backgroundColor: C.inputBg,
       color: C.inputText,

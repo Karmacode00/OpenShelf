@@ -43,7 +43,7 @@ export default function LoginScreen() {
           <Text style={s.label}>Email</Text>
           <TextInput
             placeholder="usuario@email.cl"
-            placeholderTextColor={scheme === 'light' ? '#024059' : '#7AA5AB'}
+            placeholderTextColor={C.icon}
             value={email}
             onChangeText={setEmail}
             style={s.input}
@@ -54,7 +54,7 @@ export default function LoginScreen() {
           <Text style={s.label}>Contraseña</Text>
           <TextInput
             placeholder="••••••••"
-            placeholderTextColor={scheme === 'light' ? '#024059' : '#7AA5AB'}
+            placeholderTextColor={C.icon}
             value={password}
             onChangeText={setPassword}
             style={s.input}

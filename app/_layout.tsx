@@ -1,13 +1,14 @@
-import { Slot, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { FeedbackProvider } from '@/contexts/FeedbackContext';
 import { registerForPushAsync } from '@/services/push';
 import { upsertCurrentUserProfile } from '@/services/userProfile';
 
-function AuthGate({ children }: { children: React.ReactNode }) {
+function AuthGate() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
@@ -38,10 +39,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       {user ? (
         <>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="add-book"
-            options={{ presentation: 'modal' }} // o quitar si no quieres modal
-          />
+          <Stack.Screen name="add-book" options={{ presentation: 'modal' }} />
         </>
       ) : (
         <Stack.Screen name="(auth)" />
@@ -55,9 +53,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
         <AuthProvider>
-          <AuthGate>
-            <Slot />
-          </AuthGate>
+          <FeedbackProvider>
+            <AuthGate />
+          </FeedbackProvider>
         </AuthProvider>
       </SafeAreaView>
     </SafeAreaProvider>
