@@ -92,3 +92,4 @@ __pycache__/
 *.sublime-workspace
 *.sublime-project
 google-services.json
+serviceAccountKey.json

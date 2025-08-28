@@ -1,28 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
+import * as Font from 'expo-font';
 import { Stack } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { FeedbackProvider } from '@/contexts/FeedbackContext';
-import { registerForPushAsync } from '@/services/push';
-import { upsertCurrentUserProfile } from '@/services/userProfile';
+import { registerPushForCurrentUser } from '@/services/push';
 
 function AuthGate() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
     (async () => {
-      if (user?.uid) {
-        await upsertCurrentUserProfile({
-          uid: user.uid,
-          displayName: user.displayName ?? null,
-          email: user.email ?? null,
-          photoURL: user.photoURL ?? null,
-        });
-
-        await registerForPushAsync(user.uid);
-      }
+      if (user?.uid)
+        registerPushForCurrentUser().catch((e) => console.error('Push registration failed:', e));
     })().catch(console.warn);
   }, [user?.uid]);
 
@@ -49,6 +42,18 @@ function AuthGate() {
 }
 
 export default function RootLayout() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync(Ionicons.font);
+      setReady(true);
+    }
+    loadFonts();
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>

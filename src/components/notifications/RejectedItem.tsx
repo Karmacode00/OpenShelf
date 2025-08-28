@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import NotificationItemBase from './NotificationItemBase';
 import { useThemeColor } from '@hooks/useThemeColor';
@@ -8,19 +8,16 @@ import { NotifRechazado } from '@/types/notifications';
 
 type Props = {
   item: NotifRechazado;
-  onMarkRead: (id: string) => void;
 };
 
-export default function RejectedItem({ item, onMarkRead }: Props) {
+export default function RejectedItem({ item }: Props) {
   const text = useThemeColor({}, 'textContrast');
 
   return (
-    <Pressable onPress={() => onMarkRead(item.id)}>
-      <NotificationItemBase unread={item.unread}>
-        <Text style={[styles.title, { color: text }]}>{item.title}</Text>
-        <Text style={[styles.body, { color: text }]}>{item.body}</Text>
-      </NotificationItemBase>
-    </Pressable>
+    <NotificationItemBase unread={item.unread}>
+      <Text style={[styles.title, { color: text }]}>{item.title}</Text>
+      <Text style={[styles.body, { color: text }]}>{item.body}</Text>
+    </NotificationItemBase>
   );
 }
 

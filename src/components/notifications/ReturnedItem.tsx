@@ -9,11 +9,10 @@ import { NotifDevuelto } from '@/types/notifications';
 
 type Props = {
   item: NotifDevuelto;
-  onMarkRead: (id: string) => void;
   onRateUser: (borrowerId: string, borrowerName: string) => void;
 };
 
-export default function ReturnedItem({ item, onMarkRead, onRateUser }: Props) {
+export default function ReturnedItem({ item, onRateUser }: Props) {
   const text = useThemeColor({}, 'textContrast');
   const { borrowerId, userName } = item.data;
 

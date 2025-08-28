@@ -1,4 +1,3 @@
-// app/(tabs)/profile.tsx (o donde tengas tu pantalla)
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -7,14 +6,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@constants/Colors';
 import { useColorScheme } from '@hooks/useColorScheme';
+import { useUserRating } from '@hooks/useUserRating';
 
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import { useAuth } from '@/contexts/AuthContext';
+import { unregisterPushForCurrentUser } from '@/services/push';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { rating, loading: ratingLoading } = useUserRating(user?.uid || null);
 
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
@@ -34,6 +36,18 @@ export default function ProfileScreen() {
 
           <Text style={s.name}>{user?.displayName || 'Estudiante Lector'}</Text>
           <Text style={s.email}>{user?.email || 'estudiante@gmail.com'}</Text>
+          <View style={s.stars}>
+            {!ratingLoading &&
+              rating != null &&
+              [1, 2, 3, 4, 5].map((i) => (
+                <Ionicons
+                  key={`star-${i}`}
+                  name={i <= rating ? 'star' : 'star-outline'}
+                  size={28}
+                  color="#F5A623"
+                />
+              ))}
+          </View>
         </View>
 
         <Card style={s.cardBlock}>
@@ -81,7 +95,7 @@ export default function ProfileScreen() {
             <View style={[s.itemRow, { marginTop: 18 }]}>
               <View style={s.itemLeft}>
                 <Ionicons
-                  name="book"
+                  name="settings"
                   size={22}
                   color={C.textContrast}
                   style={{ marginRight: 12 }}
@@ -99,7 +113,19 @@ export default function ProfileScreen() {
         </Card>
 
         <View style={{ marginTop: 24 }}>
-          <Button label="Cerrar sesión" variant="primary" onPress={logout} />
+          <Button
+            label="Cerrar sesión"
+            variant="primary"
+            onPress={async () => {
+              try {
+                await unregisterPushForCurrentUser();
+              } catch (e) {
+                console.error('No se pudo desregistrar el push token:', e);
+              } finally {
+                await logout();
+              }
+            }}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -140,7 +166,13 @@ const getStyles = (C: typeof Colors.light) =>
       textAlign: 'center',
       color: C.textDark,
       marginTop: 4,
-      marginBottom: 20,
+      marginBottom: 8,
+    },
+    stars: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 8,
+      marginBottom: 16,
     },
     cardBlock: {
       borderRadius: 15,

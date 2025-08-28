@@ -1,4 +1,3 @@
-// app/search.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -14,22 +13,37 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@constants/Colors';
-import { useSearch, BookItem } from '@hooks/useSearch';
+import { useSearch } from '@hooks/useSearch';
 
 import BookListItem from '@/components/BookListItem';
 import SearchBar from '@/components/SearchBar';
+import { useFeedback } from '@/contexts/FeedbackContext';
+import { Book } from '@/domain/entities/Book';
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { confirmAction, showLoading, showSuccess, showError } = useFeedback();
   const { query, setQuery, results, isLoading, requestingIds, runSearch, handleRequest } =
     useSearch();
 
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
-  const getActionStatus = (item: BookItem) => {
+  const getActionStatus = (item: Book) => {
     if (requestingIds.has(item.id)) return 'Loading';
-    return item.status === 'requested' ? 'Solicitado' : 'Solicitar';
+    return item.status === 'requested' ? 'Pendiente' : 'Solicitar';
+  };
+
+  const confirmAndRequest = (item: Book) => {
+    confirmAction('¿Quieres solicitar este libro?', async () => {
+      try {
+        showLoading('Solicitando...');
+        await handleRequest(item);
+        showSuccess('¡Solicitud enviada!');
+      } catch {
+        showError('No se pudo solicitar el libro');
+      }
+    });
   };
 
   return (
@@ -76,7 +90,10 @@ export default function SearchScreen() {
                 imageUrl={item.imageUrl}
                 showActionButton
                 actionStatus={getActionStatus(item)}
-                onActionPress={() => handleRequest(item)}
+                onActionPress={() => confirmAndRequest(item)}
+                distanceKm={item.distanceKm}
+                ownerRating={item.ownerRating}
+                ownerName={item.ownerName}
               />
             )}
             ListEmptyComponent={

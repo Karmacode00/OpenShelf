@@ -33,7 +33,7 @@ export default function ProfileSettingsScreen() {
       setLoading(false);
     };
     fetchLocation();
-  }, [modalVisible]);
+  }, [modalVisible, user?.uid]);
 
   const handlePasswordReset = async () => {
     try {

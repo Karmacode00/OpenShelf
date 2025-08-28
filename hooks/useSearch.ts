@@ -1,71 +1,35 @@
-// hooks/useSearch.ts
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
+import { useEffect, useState } from 'react';
+
+import { useNearbyBooks } from './useNearbyBooks';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { getBookRepository } from '@/di/container';
+import { Book } from '@/domain/entities/Book';
 import { requestBookUseCase } from '@/domain/usecases/requestBook';
-import { searchBooksUseCase } from '@/domain/usecases/searchBooks';
-
-export type BookItem = {
-  id: string;
-  title: string;
-  author: string;
-  imageUrl: string;
-  ownerId: string;
-  status: 'available' | 'requested' | 'loaned';
-  borrowerId?: string | null;
-};
 
 export function useSearch() {
   const { q } = useLocalSearchParams<{ q?: string }>();
   const { user } = useAuth();
+  const { books, loading, loadNearby } = useNearbyBooks();
 
   const [query, setQuery] = useState(q ?? '');
-  const [results, setResults] = useState<BookItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [requestingIds, setRequestingIds] = useState<Set<string>>(new Set());
 
-  const bookRepository = useMemo(() => getBookRepository(), []);
-  const searchBooks = useMemo(() => searchBooksUseCase(bookRepository), [bookRepository]);
-  const requestBook = useMemo(() => requestBookUseCase(bookRepository), [bookRepository]);
+  const requestBook = requestBookUseCase(getBookRepository());
 
-  const runSearch = async (searchText: string) => {
-    const trimmedQuery = searchText.trim();
-    if (!trimmedQuery) {
-      setResults([]);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const data = await searchBooks({ query: trimmedQuery, excludeOwnerId: user?.uid });
-      setResults(data as BookItem[]);
-    } catch (error) {
-      console.error('Error en la búsqueda:', error);
-      Alert.alert('Error', 'No se pudo realizar la búsqueda.');
-    } finally {
-      setIsLoading(false);
-    }
+  const runSearch = (searchText: string) => {
+    if (!user?.uid) return;
+    loadNearby(searchText.trim());
   };
 
-  const handleRequest = async (item: BookItem) => {
-    if (!user?.uid || item.status !== 'available' || requestingIds.has(item.id)) {
-      return;
-    }
-
-    const originalResults = results;
+  const handleRequest = async (item: Book) => {
+    if (!user?.uid || item.status !== 'available' || requestingIds.has(item.id)) return;
     setRequestingIds((prev) => new Set(prev).add(item.id));
-    setResults((prev) =>
-      prev.map((b) => (b.id === item.id ? { ...b, status: 'requested', borrowerId: user.uid } : b)),
-    );
-
     try {
       await requestBook({ bookId: item.id, requesterId: user.uid });
-    } catch (e: any) {
+    } catch (e) {
       console.error('Error al solicitar el libro:', e);
-      Alert.alert('No se pudo solicitar', e?.message ?? 'Intenta nuevamente');
-      setResults(originalResults);
     } finally {
       setRequestingIds((prev) => {
         const next = new Set(prev);
@@ -77,17 +41,14 @@ export function useSearch() {
 
   useEffect(() => {
     const queryFromParams = (q ?? '').toString().trim();
-    if (queryFromParams) {
-      runSearch(queryFromParams);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (queryFromParams) runSearch(queryFromParams);
   }, [q, user?.uid]);
 
   return {
     query,
     setQuery,
-    results,
-    isLoading,
+    results: books,
+    isLoading: loading,
     requestingIds,
     runSearch,
     handleRequest,

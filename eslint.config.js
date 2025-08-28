@@ -23,6 +23,11 @@ module.exports = defineConfig([
               position: 'after',
             },
             {
+              pattern: '@assets/**',
+              group: 'internal',
+              position: 'after',
+            },
+            {
               pattern: '@components',
               group: 'internal',
               position: 'after',

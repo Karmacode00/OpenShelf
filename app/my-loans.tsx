@@ -1,108 +1,43 @@
-// app/loans.tsx (fragmentos clave)
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from 'react-native';
+import React from 'react';
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@constants/Colors';
 import { useColorScheme } from '@hooks/useColorScheme';
+import { useLoans } from '@hooks/useLoans';
 
 import BookListItem from '@/components/BookListItem';
-import { useAuth } from '@/contexts/AuthContext';
-import { getBookRepository } from '@/di/container';
-import { cancelRequestUseCase } from '@/domain/usecases/cancelRequest';
-import { listMyLoansUseCase } from '@/domain/usecases/listMyLoans';
-import { returnBookUseCase } from '@/domain/usecases/returnBook';
+import { LoanWithBook } from '@/domain/usecases/listMyLoans';
 
 export default function LoansScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { items, loading, loadingById, handleCancel, handleReturn, load } = useLoans();
 
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
-  const repo = useMemo(() => getBookRepository(), []);
-  const listMyLoans = useMemo(() => listMyLoansUseCase(repo), [repo]);
-  const cancelRequest = useMemo(() => cancelRequestUseCase(repo), [repo]);
-  const returnBook = useMemo(() => returnBookUseCase(repo), [repo]);
-
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<any[]>([]);
-  const [loadingById, setLoadingById] = useState<Record<string, boolean>>({}); // 👈
-
-  async function load() {
-    if (!user?.uid) return;
-    setLoading(true);
-    try {
-      const data = await listMyLoans(user.uid);
-      setItems(data);
-    } catch (e: any) {
-      console.error(e);
-      Alert.alert('Error', 'No se pudieron cargar tus préstamos.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, [user?.uid]);
-
-  const setItemLoading = (id: string, v: boolean) =>
-    setLoadingById((prev) => {
-      const next = { ...prev };
-      if (v) next[id] = true;
-      else delete next[id];
-      return next;
-    });
-
-  const handleCancel = async (bookId: string) => {
-    if (!user?.uid) return;
-    setItemLoading(bookId, true);
-    try {
-      await cancelRequest({ bookId, borrowerId: user.uid });
-      setItems((prev) => prev.filter((b) => b.id !== bookId));
-    } catch (e: any) {
-      Alert.alert('No se pudo cancelar', e?.message ?? 'Intenta nuevamente');
-    } finally {
-      setItemLoading(bookId, false);
-    }
-  };
-
-  const handleReturn = async (bookId: string) => {
-    if (!user?.uid) return;
-    setItemLoading(bookId, true);
-    try {
-      await returnBook({ bookId, borrowerId: user.uid });
-      setItems((prev) => prev.filter((b) => b.id !== bookId));
-    } catch (e: any) {
-      Alert.alert('No se pudo devolver', e?.message ?? 'Intenta nuevamente');
-    } finally {
-      setItemLoading(bookId, false);
-    }
-  };
-
-  const renderItem = ({ item }: { item: any }) => {
+  const renderItem = ({ item }: { item: LoanWithBook }) => {
     const isRequested = item.status === 'requested';
     const isLoaned = item.status === 'loaned';
     const isLoading = !!loadingById[item.id];
 
     const label = isRequested ? 'Cancelar solicitud' : isLoaned ? 'Devolver' : undefined;
     const onPress = isRequested
-      ? () => handleCancel(item.id)
+      ? () => handleCancel(item.book.id)
       : isLoaned
-        ? () => handleReturn(item.id)
+        ? () => handleReturn(item.book.id)
         : undefined;
 
     return (
       <BookListItem
-        title={item.title}
-        author={item.author}
-        imageUrl={item.imageUrl}
+        title={item.book.title}
+        author={item.book.author}
+        imageUrl={item.book.imageUrl}
         showActionButton={!!label}
         actionLabel={label}
-        actionStatus={isLoading ? 'Loading' : isRequested ? 'Solicitado' : 'Devolver'}
+        actionStatus={isLoading ? 'Loading' : isRequested ? 'Pendiente' : 'Devolver'}
         onActionPress={onPress}
       />
     );

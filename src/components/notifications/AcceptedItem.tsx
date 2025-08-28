@@ -1,5 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import NotificationItemBase from './NotificationItemBase';
 import { useThemeColor } from '@hooks/useThemeColor';
@@ -8,7 +9,7 @@ import { NotifAceptado } from '@/types/notifications';
 
 type Props = {
   item: NotifAceptado;
-  onMarkRead: (id: string) => void;
+  onMarkRead?: (id: string) => void;
 };
 
 export default function AcceptedItem({ item, onMarkRead }: Props) {
@@ -16,22 +17,32 @@ export default function AcceptedItem({ item, onMarkRead }: Props) {
   const { ownerEmail } = item.data;
 
   return (
-    <Pressable onPress={() => onMarkRead(item.id)}>
-      <NotificationItemBase unread={item.unread}>
+    <NotificationItemBase>
+      <View style={styles.header}>
         <Text style={[styles.title, { color: text }]}>{item.title}</Text>
-        <Text style={[styles.body, { color: text }]}>{item.body}.</Text>
-        <Text style={[styles.body, { color: text, marginTop: 4 }]}>
-          Puedes ponerte en contacto en el email <Text style={styles.strong}>{ownerEmail}</Text>.
-        </Text>
-      </NotificationItemBase>
-    </Pressable>
+        {onMarkRead && (
+          <Pressable onPress={() => onMarkRead(item.id)} hitSlop={8}>
+            <Ionicons name="close" size={18} color={text} />
+          </Pressable>
+        )}
+      </View>
+      <Text style={[styles.body, { color: text }]}>{item.body}.</Text>
+      <Text style={[styles.body, { color: text, marginTop: 4 }]}>
+        Puedes ponerte en contacto en el email <Text style={styles.strong}>{ownerEmail}</Text>.
+      </Text>
+    </NotificationItemBase>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   title: {
     fontWeight: '700',
-    marginBottom: 6,
     fontSize: 16,
   },
   body: {

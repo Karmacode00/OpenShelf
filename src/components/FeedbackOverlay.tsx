@@ -1,6 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { ActivityIndicator, Modal, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  Pressable,
+} from 'react-native';
 
 import { Colors } from '@constants/Colors';
 
@@ -10,9 +17,17 @@ type Props = {
   success?: boolean;
   error?: boolean;
   message?: string;
+  onClose?: () => void;
 };
 
-export default function FeedbackOverlay({ visible, loading, success, error, message }: Props) {
+export default function FeedbackOverlay({
+  visible,
+  loading,
+  success,
+  error,
+  message,
+  onClose,
+}: Props) {
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
@@ -27,12 +42,15 @@ export default function FeedbackOverlay({ visible, loading, success, error, mess
 
   return (
     <Modal transparent animationType="fade" visible={visible}>
-      <View style={styles.overlay}>
-        <View style={[styles.box, { backgroundColor: C.surface }]}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable
+          style={[styles.box, { backgroundColor: C.surface }]}
+          onPress={(e) => e.stopPropagation()}
+        >
           {getIcon()}
-          <Text style={[styles.text, { color: C.text }]}>{message}</Text>
-        </View>
-      </View>
+          {message && <Text style={[styles.text, { color: C.text }]}>{message}</Text>}
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
@@ -43,6 +61,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#00000066',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
   box: {
     padding: 24,

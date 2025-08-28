@@ -1,104 +1,40 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { collection, getDocs, orderBy, query, updateDoc, doc, where } from 'firebase/firestore';
-import React, { useEffect, useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { Text, View, Pressable, StyleSheet, SafeAreaView, useColorScheme } from 'react-native';
 
 import { Colors } from '@constants/Colors';
+import { useNotifications } from '@hooks/useNotifications';
 
 import NotificationList from '@/components/notifications/NotificationList';
 import RatingModal from '@/components/RatingModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { useFeedback } from '@/contexts/FeedbackContext';
-import { getBookRepository, getUserRepository } from '@/di/container';
-import { acceptRequestUseCase } from '@/domain/usecases/acceptRequest';
-import { rateUserUseCase } from '@/domain/usecases/rateUser';
-import { rejectRequestUseCase } from '@/domain/usecases/rejectRequest';
-import { db } from '@/services/firebase';
-import { AppNotification } from '@/types/notifications';
 
 export default function NotificationsScreen() {
   const { user } = useAuth();
-  const { showLoading, showSuccess, showError, hide } = useFeedback();
-  const [items, setItems] = useState<AppNotification[]>([]);
+  const { items, handleAccept, handleReject, handleRate, handleRead, markRead } =
+    useNotifications();
 
   const [ratingVisible, setRatingVisible] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedUserName, setSelectedUserName] = useState<string>('');
-
-  const repo = useMemo(() => getBookRepository(), []);
-  const userRepo = useMemo(() => getUserRepository(), []);
-  const acceptRequest = useMemo(() => acceptRequestUseCase(repo), [repo]);
-  const rejectRequest = useMemo(() => rejectRequestUseCase(repo), [repo]);
-  const rateUser = useMemo(() => rateUserUseCase(userRepo), [userRepo]);
+  const [selected, setSelected] = useState<{ uid: string; name: string; notifId: string } | null>(
+    null,
+  );
 
   const scheme = useColorScheme() ?? 'light';
   const C = Colors[scheme];
 
-  const load = async () => {
-    if (!user?.uid) return;
-    const q = query(
-      collection(db, 'users', user.uid, 'notifications'),
-      where('unread', '==', true),
-      orderBy('createdAt', 'desc'),
-    );
-    const snap = await getDocs(q);
-    setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as AppNotification));
-  };
-
-  useEffect(() => {
-    load();
-  }, [user?.uid]);
-
-  const markRead = async (id: string) => {
-    await updateDoc(doc(db, 'users', user!.uid, 'notifications', id), { unread: false });
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)));
-  };
-
-  const handleAcceptRequest = async (bookId: string, notificationId: string) => {
-    try {
-      if (!user?.uid) return;
-      await acceptRequest({ bookId, ownerId: user.uid });
-      await markRead(notificationId);
-    } catch (err) {
-      console.error('Error al aceptar solicitud:', err);
-    }
-  };
-
-  const handleRejectRequest = async (bookId: string, notificationId: string) => {
-    try {
-      if (!user?.uid) return;
-      await rejectRequest({ bookId, ownerId: user.uid });
-      await markRead(notificationId);
-    } catch (err) {
-      console.error('Error al rechazar solicitud:', err);
-    }
-  };
-
-  const handleRateUser = async (borrowerId: string, borrowerName: string) => {
-    setSelectedUserId(borrowerId);
-    setSelectedUserName(borrowerName);
-    setRatingVisible(true);
-  };
-
-  const handleSubmitRating = async (rating: number) => {
-    if (!user?.uid || !selectedUserId) return;
-
-    try {
-      showLoading('Enviando calificación...');
-      await rateUser(user.uid, selectedUserId, rating);
-      showSuccess('¡Calificación enviada!');
-      setTimeout(hide, 1800);
-      setRatingVisible(false);
-      setSelectedUserId(null);
-      setSelectedUserName('');
-      load();
-    } catch (err) {
-      console.error('Error al enviar calificación:', err);
-      showError('Ocurrió un error al calificar');
-      setTimeout(hide, 2000);
-    }
-  };
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        const toMark = items.filter((n) => n.unread && n.type === 'rechazado');
+        if (toMark.length > 0) {
+          Promise.all(toMark.map((n) => markRead(n.id))).catch((e) =>
+            console.error('Auto mark rejected notifications failed:', e),
+          );
+        }
+      };
+    }, [items, markRead]),
+  );
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: C.background }]}>
@@ -122,17 +58,25 @@ export default function NotificationsScreen() {
 
         <NotificationList
           items={items}
-          onMarkRead={markRead}
-          onAcceptRequest={handleAcceptRequest}
-          onRejectRequest={handleRejectRequest}
-          onRateUser={(borrowerId, borrowerName) => handleRateUser(borrowerId, borrowerName)}
+          onAcceptRequest={handleAccept}
+          onRejectRequest={handleReject}
+          onRateUser={(borrowerId, borrowerName, notifId) => {
+            setSelected({ uid: borrowerId, name: borrowerName, notifId });
+            setRatingVisible(true);
+          }}
+          onMarkRead={handleRead}
         />
 
         <RatingModal
           visible={ratingVisible}
-          userName={selectedUserName}
+          userName={selected?.name ?? ''}
           onClose={() => setRatingVisible(false)}
-          onRate={handleSubmitRating}
+          onRate={(rating, comment) => {
+            if (user?.uid && selected) {
+              handleRate(user.uid, selected.uid, rating, selected.notifId, comment);
+              setRatingVisible(false);
+            }
+          }}
         />
       </View>
     </SafeAreaView>

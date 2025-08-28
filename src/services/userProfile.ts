@@ -7,20 +7,27 @@ type MinimalUser = {
   displayName?: string | null;
   email?: string | null;
   photoURL?: string | null;
+  location?: {
+    latitude: number;
+    longitude: number;
+    formattedAddress?: string | null;
+  } | null;
 };
 
 export async function upsertCurrentUserProfile(user: MinimalUser) {
   const { uid, displayName = null, email = null, photoURL = null } = user;
-  await setDoc(
-    doc(db, 'users', uid),
-    {
-      uid,
-      displayName,
-      email,
-      photoURL,
-      updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+
+  const payload: any = {
+    uid,
+    displayName,
+    email,
+    photoURL,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (user.location !== null && user.location !== undefined) {
+    payload.location = user.location;
+  }
+
+  await setDoc(doc(db, 'users', uid), payload, { merge: true });
 }

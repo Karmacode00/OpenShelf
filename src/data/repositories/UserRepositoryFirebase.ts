@@ -7,16 +7,12 @@ import {
   getDocs,
   serverTimestamp,
   setDoc,
-  updateDoc,
 } from 'firebase/firestore';
 
 import type { UserLocation, UserRepository } from '@/domain/repositories/UserRepository';
 import { auth, db } from '@/services/firebase';
 
 export class UserRepositoryFirebase implements UserRepository {
-  getUserRatingScore(userId: string): Promise<number> {
-    throw new Error('Method not implemented.');
-  }
   async getUserLocation(userId: string): Promise<UserLocation | null> {
     const userRef = doc(db, 'users', userId);
     const snap = await getDoc(userRef);
@@ -55,7 +51,12 @@ export class UserRepositoryFirebase implements UserRepository {
     await sendPasswordResetEmail(auth, email);
   }
 
-  async rateUser(raterId: string, ratedId: string, rating: number): Promise<void> {
+  async rateUser(
+    raterId: string,
+    ratedId: string,
+    rating: number,
+    comment?: string,
+  ): Promise<void> {
     const ratingRef = collection(db, 'users', ratedId, 'ratings');
     const userRef = doc(db, 'users', ratedId);
 
@@ -63,6 +64,7 @@ export class UserRepositoryFirebase implements UserRepository {
       await addDoc(ratingRef, {
         raterId,
         rating,
+        comment: comment ?? null,
         createdAt: serverTimestamp(),
       });
 
@@ -81,6 +83,26 @@ export class UserRepositoryFirebase implements UserRepository {
     } catch (error) {
       console.error('Error rating user:', error);
       throw error;
+    }
+  }
+
+  async getUserRatingScore(userId: string): Promise<number | null> {
+    try {
+      const ref = doc(db, 'users', userId);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) return 0;
+
+      const data = snap.data() as any;
+      const total = data.rating?.total ?? 0;
+      const count = data.rating?.count ?? 0;
+
+      if (count === 0) return null;
+
+      return total / count;
+    } catch (err) {
+      console.error('Error obteniendo rating del usuario:', err);
+      throw err;
     }
   }
 }

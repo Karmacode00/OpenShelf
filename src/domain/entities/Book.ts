@@ -9,4 +9,10 @@ export type Book = {
   status: BookStatus;
   borrowerId?: string | null;
   createdAt?: Date;
+  location: {
+    latitude: number;
+    longitude: number;
+    formattedAddress: string | null;
+  };
+  geohash: string;
 };

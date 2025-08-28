@@ -2,6 +2,7 @@ import * as Location from 'expo-location';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   StyleSheet,
@@ -9,8 +10,9 @@ import {
   View,
   useColorScheme,
 } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
+import { Region } from 'react-native-maps';
 
+import MapPicker from './MapPicker';
 import { Colors } from '@constants/Colors';
 
 import { getUserRepository } from '@/di/container';
@@ -28,8 +30,10 @@ export default function LocationModal({ visible, userId, onClose, onSaved }: Pro
   const C = Colors[scheme];
   const s = getStyles(C);
 
-  const [loading, setLoading] = useState(true);
+  const [permDenied, setPermDenied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const userRepo = useMemo(() => getUserRepository(), []);
@@ -39,25 +43,47 @@ export default function LocationModal({ visible, userId, onClose, onSaved }: Pro
     if (!visible) return;
 
     (async () => {
+      setMapReady(false);
+      setPermDenied(false);
+      setErrorMsg(null);
+      setRegion(null);
+
       try {
-        setLoading(true);
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          setLoading(false);
+          setPermDenied(true);
           return;
         }
-        const pos = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        const { latitude, longitude } = pos.coords;
-        setRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
-      } finally {
-        setLoading(false);
+
+        try {
+          const pos = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+          const { latitude, longitude } = pos.coords;
+          setRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          });
+        } catch (err) {
+          console.warn('[Location] getCurrentPositionAsync falló, probando lastKnown:', err);
+          const last = await Location.getLastKnownPositionAsync();
+          if (last?.coords) {
+            const { latitude, longitude } = last.coords;
+            setRegion({
+              latitude,
+              longitude,
+              latitudeDelta: 0.008,
+              longitudeDelta: 0.008,
+            });
+          } else {
+            setErrorMsg('No pudimos obtener tu ubicación. Verifica el GPS e inténtalo de nuevo.');
+          }
+        }
+      } catch (err) {
+        console.error('[Location] Error solicitando permisos/ubicación:', err);
+        setErrorMsg('Ocurrió un problema con la ubicación. Revisa los permisos de la app.');
       }
     })();
   }, [visible]);
@@ -67,6 +93,7 @@ export default function LocationModal({ visible, userId, onClose, onSaved }: Pro
     setSaving(true);
     try {
       let formatted: string | null = null;
+
       try {
         const res = await Location.reverseGeocodeAsync({
           latitude: region.latitude,
@@ -78,22 +105,33 @@ export default function LocationModal({ visible, userId, onClose, onSaved }: Pro
             .filter(Boolean)
             .join(', ');
         }
-      } catch {}
+      } catch (err) {
+        console.warn(
+          '[Location] reverseGeocodeAsync falló, se guardará sin formattedAddress:',
+          err,
+        );
+      }
 
       await saveLocation(userId, {
         latitude: region.latitude,
         longitude: region.longitude,
         formattedAddress: formatted,
       });
+
       onSaved?.();
       onClose();
+    } catch (err) {
+      console.error('[Location] Error guardando ubicación:', err);
+      Alert.alert('Error', 'No se pudo guardar tu ubicación. Intenta nuevamente.');
     } finally {
       setSaving(false);
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible animationType="slide" transparent statusBarTranslucent>
       <View style={s.overlay}>
         <View style={s.sheet}>
           <Text style={s.title}>Establecer ubicación principal</Text>
@@ -103,26 +141,40 @@ export default function LocationModal({ visible, userId, onClose, onSaved }: Pro
           </Text>
 
           <View style={s.mapWrap}>
-            {loading || !region ? (
-              <View style={s.loader}>
-                <ActivityIndicator size="large" color={C.buttonPrimary} />
-                <Text style={[s.sub, { marginTop: 8 }]}>Obteniendo ubicación…</Text>
+            {!region && (
+              <View style={s.mapPlaceholder}>
+                <ActivityIndicator size="large" color={C.tint} />
+                <Text style={{ color: C.textContrast, opacity: 0.8, marginTop: 8 }}>
+                  {permDenied
+                    ? 'Permiso de ubicación denegado. Habilítalo en Ajustes para continuar.'
+                    : (errorMsg ?? 'Obteniendo tu ubicación...')}
+                </Text>
               </View>
-            ) : (
-              <MapView
-                style={{ flex: 1 }}
-                initialRegion={region}
-                onRegionChangeComplete={(r) => setRegion(r)}
-              >
-                <Marker
-                  coordinate={{ latitude: region.latitude, longitude: region.longitude }}
-                  draggable
-                  onDragEnd={(e) => {
-                    const { latitude, longitude } = e.nativeEvent.coordinate;
-                    setRegion({ ...region, latitude, longitude });
-                  }}
-                />
-              </MapView>
+            )}
+
+            {region && (
+              <View style={{ flex: 1 }}>
+                <View
+                  style={{ flex: 1, opacity: mapReady ? 1 : 0.01 }}
+                  pointerEvents={mapReady ? 'auto' : 'none'}
+                >
+                  <MapPicker
+                    region={region}
+                    draggable
+                    onRegionChange={(r) => setRegion(r)}
+                    onReady={() => setMapReady(true)}
+                  />
+                </View>
+
+                {!mapReady && (
+                  <View style={s.mapLoadingOverlay}>
+                    <ActivityIndicator size="large" color={C.tint} />
+                    <Text style={{ color: C.textContrast, opacity: 0.8, marginTop: 8 }}>
+                      Cargando mapa...
+                    </Text>
+                  </View>
+                )}
+              </View>
             )}
           </View>
 
@@ -165,7 +217,18 @@ function getStyles(C: (typeof Colors)['light']) {
       borderRadius: 12,
       overflow: 'hidden',
     },
-    loader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    mapPlaceholder: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#0002',
+    },
+    mapLoadingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#0003',
+    },
     actions: { flexDirection: 'row', gap: 12, marginTop: 8 },
     btn: {
       flex: 1,

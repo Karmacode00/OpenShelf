@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -13,6 +14,13 @@ Notifications.setNotificationHandler({
   }),
 });
 
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.DEFAULT,
+  });
+}
+
 export default function Index() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -20,12 +28,12 @@ export default function Index() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/home'); // dentro de (tabs)
+        router.replace('/home');
       } else {
-        router.replace('/login'); // dentro de (auth)
+        router.replace('/login');
       }
     }
   }, [user, loading]);
 
-  return null; // no muestra nada
+  return null;
 }

@@ -50,6 +50,7 @@ export const useAuthViewModel = () => {
           displayName: name,
           email: currentUser.email ?? null,
           photoURL: currentUser.photoURL ?? null,
+          location: null,
         });
       }
       setError(null);

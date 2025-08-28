@@ -10,10 +10,10 @@ import { AppNotification } from '@/types/notifications';
 
 type Props = {
   items: AppNotification[];
-  onMarkRead: (id: string) => void;
+  onMarkRead?: (id: string) => void;
   onAcceptRequest: (bookId: string, notificationId: string) => void;
   onRejectRequest: (bookId: string, notificationId: string) => void;
-  onRateUser: (borrowerId: string, borrowerName: string) => void;
+  onRateUser: (borrowerId: string, borrowerName: string, notificationId: string) => void;
 };
 
 export default function NotificationList({
@@ -37,9 +37,16 @@ export default function NotificationList({
           case 'aceptado':
             return <AcceptedItem item={item} onMarkRead={onMarkRead} />;
           case 'rechazado':
-            return <RejectedItem item={item} onMarkRead={onMarkRead} />;
+            return <RejectedItem item={item} />;
           case 'devuelto':
-            return <ReturnedItem item={item} onMarkRead={onMarkRead} onRateUser={onRateUser} />;
+            return (
+              <ReturnedItem
+                item={item}
+                onRateUser={(borrowerId, borrowerName) =>
+                  onRateUser(borrowerId, borrowerName, item.id)
+                }
+              />
+            );
           default:
             return null;
         }
