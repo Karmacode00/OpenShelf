@@ -1,50 +1,70 @@
-# Welcome to your Expo app 👋
+# 📚 OpenShelf
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**OpenShelf** es una aplicación móvil que facilita el préstamo de libros entre personas, promoviendo el acceso colaborativo al conocimiento.  
+La app permite publicar libros, solicitar préstamos, calificar usuarios y recibir notificaciones en tiempo real sobre cada interacción.  
 
-## Get started
+## ✨ Características principales
+- 📖 **Gestión de libros**: publicar, solicitar, devolver y marcar como prestado.  
+- 📍 **Geolocalización**: búsqueda de libros disponibles en un radio definido.  
+- 🔔 **Notificaciones push**: avisos en tiempo real al aceptar, rechazar o devolver un libro.  
+- ⭐ **Sistema de calificaciones**: puntaje entre usuarios tras finalizar un préstamo.  
+- 🎯 **Sistema de incentivos**: motivar la participación activa mediante logros y recompensas dentro de la app.  
+- 🛠️ **Infraestructura sin backend tradicional**: todo se maneja con **Firebase (Firestore, Auth, Cloud Functions, FCM)**.  
 
-1. Install dependencies
+## 🏗️ Arquitectura
+- **Frontend**: React Native (Expo) + TypeScript.  
+- **Backend**: Firebase Cloud Functions (Node.js).  
+- **Base de datos**: Firebase Firestore.  
+- **Autenticación**: Firebase Authentication.  
+- **Notificaciones**: Firebase Cloud Messaging + Expo.  
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+## 📂 Estructura del repositorio
+```
+openshelf/
+│── app/            # Código principal de la app (Expo + React Native)
+│── functions/      # Cloud Functions para notificaciones y lógica extra
+│── docs/           # Documentación y diagramas
+│── README.md
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## ⚙️ Instalación y ejecución
 
-## Learn more
+### 1. Clonar repositorio
+```bash
+git clone https://github.com/tu-usuario/openshelf.git
+cd openshelf
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 2. Frontend (React Native + Expo)
+```bash
+cd app
+npm install
+npx expo start
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 3. Firebase Functions
+```bash
+cd functions
+npm install
+firebase deploy --only functions
+```
 
-## Join the community
+⚠️ **Nota**: asegúrate de tener configurado un proyecto de Firebase y de colocar tu archivo `google-services.json` (Android) y/o `GoogleService-Info.plist` (iOS) en la carpeta correspondiente.  
 
-Join our community of developers creating universal apps.
+## 🧪 Pruebas
+- El frontend puede probarse con **Expo Go** en dispositivos móviles.  
+- Las Cloud Functions pueden validarse con **Firebase Emulator Suite** o tras desplegarlas.  
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🤝 Contribución
+1. Haz un **fork** del repositorio.  
+2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`).  
+3. Realiza un **commit** con tus cambios (`git commit -m "feat: agregar notificación de devolución"`).  
+4. Sube la rama (`git push origin feature/nueva-funcionalidad`).  
+5. Abre un **Pull Request**.  
+
+## 📌 Roadmap
+- [ ] Implementar filtrado avanzado por categorías y autores.  
+- [ ] Añadir sistema de recordatorios de devolución.  
+- [ ] Mejorar incentivos con logros y recompensas.  
+
+
