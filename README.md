@@ -4,11 +4,10 @@
 La app permite publicar libros, solicitar préstamos, calificar usuarios y recibir notificaciones en tiempo real sobre cada interacción.  
 
 ## ✨ Características principales
-- 📖 **Gestión de libros**: publicar, solicitar, devolver y marcar como prestado.  
+- 📖 **Gestión de libros**: publicar, solicitar y devolver.  
 - 📍 **Geolocalización**: búsqueda de libros disponibles en un radio definido.  
 - 🔔 **Notificaciones push**: avisos en tiempo real al aceptar, rechazar o devolver un libro.  
-- ⭐ **Sistema de calificaciones**: puntaje entre usuarios tras finalizar un préstamo.  
-- 🎯 **Sistema de incentivos**: motivar la participación activa mediante logros y recompensas dentro de la app.  
+- ⭐ **Sistema de calificaciones**: puntaje entre usuarios tras finalizar un préstamo.
 - 🛠️ **Infraestructura sin backend tradicional**: todo se maneja con **Firebase (Firestore, Auth, Cloud Functions, FCM)**.  
 
 ## 🏗️ Arquitectura
@@ -17,15 +16,6 @@ La app permite publicar libros, solicitar préstamos, calificar usuarios y recib
 - **Base de datos**: Firebase Firestore.  
 - **Autenticación**: Firebase Authentication.  
 - **Notificaciones**: Firebase Cloud Messaging + Expo.  
-
-## 📂 Estructura del repositorio
-```
-openshelf/
-│── app/            # Código principal de la app (Expo + React Native)
-│── functions/      # Cloud Functions para notificaciones y lógica extra
-│── docs/           # Documentación y diagramas
-│── README.md
-```
 
 ## ⚙️ Instalación y ejecución
 
@@ -65,6 +55,6 @@ firebase deploy --only functions
 ## 📌 Roadmap
 - [ ] Implementar filtrado avanzado por categorías y autores.  
 - [ ] Añadir sistema de recordatorios de devolución.  
-- [ ] Mejorar incentivos con logros y recompensas.  
+- [ ] Implementar incentivos con logros y recompensas.  
 
 

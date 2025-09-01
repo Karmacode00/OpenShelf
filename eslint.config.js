@@ -51,6 +51,13 @@ module.exports = defineConfig([
           'newlines-between': 'always',
         },
       ],
+      'import/resolver': {
+        node: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+      },
     },
   },
 ]);

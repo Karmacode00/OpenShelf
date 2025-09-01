@@ -9,11 +9,12 @@ import {
   setDoc,
 } from 'firebase/firestore';
 
-import type { UserLocation, UserRepository } from '@/domain/repositories/UserRepository';
+import type { UserRepository } from '@/domain/repositories/UserRepository';
 import { auth, db } from '@/services/firebase';
+import { Location, UserProfile } from '@/domain/entities/UserProfile';
 
 export class UserRepositoryFirebase implements UserRepository {
-  async getUserLocation(userId: string): Promise<UserLocation | null> {
+  async getUserLocation(userId: string): Promise<Location | null> {
     const userRef = doc(db, 'users', userId);
     const snap = await getDoc(userRef);
     if (!snap.exists()) return null;
@@ -32,7 +33,7 @@ export class UserRepositoryFirebase implements UserRepository {
     };
   }
 
-  async saveUserLocation(userId: string, location: UserLocation): Promise<void> {
+  async saveUserLocation(userId: string, location: Location): Promise<void> {
     await setDoc(
       doc(db, 'users', userId),
       {
@@ -104,5 +105,23 @@ export class UserRepositoryFirebase implements UserRepository {
       console.error('Error obteniendo rating del usuario:', err);
       throw err;
     }
+  }
+
+  async upsertProfile(user: UserProfile): Promise<void> {
+    const { uid, displayName = null, email = null, photoURL = null } = user;
+
+    const payload: any = {
+      uid,
+      displayName,
+      email,
+      photoURL,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (user.location != null) {
+      payload.location = user.location;
+    }
+
+    await setDoc(doc(db, 'users', uid), payload, { merge: true });
   }
 }

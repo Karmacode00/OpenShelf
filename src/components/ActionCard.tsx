@@ -17,7 +17,11 @@ export default function ActionCard({ title, subtitle, icon = 'add-circle', onPre
   const textContrast = useThemeColor({}, 'textContrast');
 
   return (
-    <Pressable onPress={onPress} style={[styles.card, { backgroundColor: card }]}>
+    <Pressable
+      testID="action-card"
+      onPress={onPress}
+      style={[styles.card, { backgroundColor: card }]}
+    >
       <View style={styles.left}>
         <Ionicons name={icon} size={24} color={textContrast} style={{ marginRight: 12 }} />
         <View>

@@ -6,14 +6,14 @@ export function searchNearbyBooksUseCase(repo: BookRepository) {
     center: { latitude: number; longitude: number };
     radiusKm: number;
     excludeOwnerId?: string;
-    limit?: number;
+    limitNum?: number;
     showBorrowed?: boolean;
     queryText?: string;
   }): Promise<(Book & { distanceKm: number })[]> => {
     const res = await repo.searchNearbyPublic({
       center: params.center,
       radiusKm: params.radiusKm,
-      limitNum: params.limit ?? 50,
+      limitNum: params.limitNum ?? 50,
       excludeOwnerId: params.excludeOwnerId,
       showBorrowed: params.showBorrowed ?? false,
       queryText: params.queryText,

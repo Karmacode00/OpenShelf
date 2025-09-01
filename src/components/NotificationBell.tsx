@@ -29,9 +29,15 @@ export default function NotificationBell({ onPress }: Props) {
   }, [user?.uid]);
 
   return (
-    <Pressable onPress={onPress} style={[styles.btn, { backgroundColor: fg }]} hitSlop={10}>
+    <Pressable
+      accessibilityRole="button"
+      testID="notification-bell"
+      onPress={onPress}
+      style={[styles.btn, { backgroundColor: fg }]}
+      hitSlop={10}
+    >
       <Ionicons name="notifications-outline" size={20} color={bg} />
-      {hasUnread && <View style={styles.dot} />}
+      {hasUnread && <View style={styles.dot} testID="notification-dot" />}
     </Pressable>
   );
 }

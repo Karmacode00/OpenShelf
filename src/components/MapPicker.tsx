@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ViewProps } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 
 import bookPin from '@assets/images/book.png';
 
-type Props = {
+type Props = ViewProps & {
   region: Region;
   markers?: {
     id: string;
@@ -29,6 +29,7 @@ export default function MapPicker({
   onReady,
   autoFit = true,
   hasList = false,
+  ...rest
 }: Props) {
   const mapRef = useRef<MapView>(null);
   const [ready, setReady] = useState(false);
@@ -55,7 +56,7 @@ export default function MapPicker({
   }, [ready, autoFit, markers, region]);
 
   return (
-    <View style={styles.mapWrap}>
+    <View style={styles.mapWrap} {...rest}>
       <MapView
         ref={mapRef}
         style={{ flex: 1 }}

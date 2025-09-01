@@ -4,7 +4,7 @@ import { useAuthViewModel } from '../viewmodels/useAuthViewModel';
 
 type AuthContextType = ReturnType<typeof useAuthViewModel>;
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const auth = useAuthViewModel();

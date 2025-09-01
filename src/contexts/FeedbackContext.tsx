@@ -27,7 +27,7 @@ type FeedbackContextType = {
   confirmAction: (message: string, onConfirm: () => void) => void;
 };
 
-const FeedbackContext = createContext<FeedbackContextType | null>(null);
+export const FeedbackContext = createContext<FeedbackContextType | null>(null);
 
 export function useFeedback() {
   const ctx = useContext(FeedbackContext);

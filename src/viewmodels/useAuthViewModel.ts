@@ -1,3 +1,4 @@
+// src/viewmodels/useAuthViewModel.ts
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -10,7 +11,9 @@ import { useEffect, useState } from 'react';
 
 import { auth } from '../services/firebase';
 
-import { upsertCurrentUserProfile } from '@/services/userProfile';
+import { getUserRepository } from '@/di/container';
+import { upsertCurrentUserProfileUseCase } from '@/domain/usecases/upsertCurrentUser';
+import type { UserProfile } from '@/domain/entities/UserProfile';
 
 export const useAuthViewModel = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -45,13 +48,18 @@ export const useAuthViewModel = () => {
       if (currentUser) {
         await updateProfile(currentUser, { displayName: name });
 
-        await upsertCurrentUserProfile({
+        const repo = getUserRepository();
+        const upsert = upsertCurrentUserProfileUseCase(repo);
+
+        const profile: UserProfile = {
           uid: currentUser.uid,
           displayName: name,
           email: currentUser.email ?? null,
           photoURL: currentUser.photoURL ?? null,
           location: null,
-        });
+        };
+
+        await upsert(profile);
       }
       setError(null);
     } catch (err: any) {

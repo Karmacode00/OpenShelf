@@ -1,0 +1,35 @@
+/** @type {import('jest').Config} */
+module.exports = {
+  preset: 'jest-expo',
+  testEnvironment: 'node',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.tsx'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@constants/(.*)$': '<rootDir>/constants/$1',
+    '^@hooks/(.*)$': '<rootDir>/hooks/$1',
+    '^@assets/(.*)$': '<rootDir>/assets/$1',
+    '^@testutils/(.*)$': '<rootDir>/testutils/$1',
+  },
+  testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/', '/dist/'],
+  coverageProvider: 'v8',
+  collectCoverage: false,
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/__tests__/**',
+    '!src/**/index.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/types.{ts,tsx}',
+  ],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/android/',
+    '/ios/',
+    '/dist/',
+    '<rootDir>/src/types/',
+    '<rootDir>/src/domain/entities/',
+    '<rootDir>/src/domain/repositories/',
+    '<rootDir>/src/services/firebase.ts',
+  ],
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageDirectory: 'coverage',
+};

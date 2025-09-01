@@ -61,7 +61,7 @@ export function useNearbyBooks() {
         center: { latitude: loc.latitude, longitude: loc.longitude },
         radiusKm: 5,
         excludeOwnerId: user.uid,
-        limit: 30,
+        limitNum: 30,
         queryText,
       });
 

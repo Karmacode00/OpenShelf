@@ -149,7 +149,7 @@ export function useNotifications() {
   ) => {
     showLoading('Enviando calificación...');
     try {
-      await rateUser(raterId, ratedId, rating, comment);
+      await rateUser({ raterId, ratedId, rating, comment });
       await markRead(notifId);
       showSuccess('¡Calificación enviada!');
       await load();

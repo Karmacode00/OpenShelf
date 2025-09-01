@@ -1,9 +1,9 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, ViewStyle, TextStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, ViewStyle, TextStyle, ViewProps } from 'react-native';
 
 import { useThemeColor } from '@hooks/useThemeColor';
 
-type Props = {
+type Props = ViewProps & {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
@@ -19,6 +19,7 @@ export default function InlineButton({
   style,
   textStyle,
   variant = 'primary',
+  ...rest
 }: Props) {
   const primary = useThemeColor({}, 'buttonPrimary');
   const primaryText = useThemeColor({}, 'buttonPrimaryText');
@@ -41,6 +42,7 @@ export default function InlineButton({
       disabled={disabled}
       style={[styles.btn, { backgroundColor: palette.bg, opacity: disabled ? 0.7 : 1 }, style]}
       hitSlop={6}
+      {...rest}
     >
       <Text style={[styles.txt, { color: palette.fg }, textStyle]}>{label}</Text>
     </Pressable>

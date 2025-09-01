@@ -80,6 +80,7 @@ const BookListItem = ({
     <View style={[styles.card, { backgroundColor: C.card }]} testID="book-list-item">
       {showDeleteButton && (
         <Pressable
+          testID="delete-button"
           accessibilityRole="button"
           accessibilityLabel={canDelete ? 'Eliminar libro' : 'Eliminar deshabilitado'}
           disabled={!canDelete}

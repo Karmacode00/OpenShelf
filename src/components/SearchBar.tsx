@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View, ViewProps } from 'react-native';
 
 import { useThemeColor } from '@hooks/useThemeColor';
 
-type Props = {
+type Props = ViewProps & {
   value: string;
   onChangeText: (t: string) => void;
   placeholder?: string;
@@ -16,6 +16,7 @@ export default function SearchBar({
   onChangeText,
   placeholder = 'Buscar libro',
   onSubmit,
+  ...rest
 }: Props) {
   const bg = useThemeColor({}, 'inputBg');
   const text = useThemeColor({}, 'inputText');
@@ -24,7 +25,7 @@ export default function SearchBar({
   const placeholderColor = useThemeColor({ light: '#5D7378', dark: '#88A7AC' }, 'icon');
 
   return (
-    <View style={[styles.wrap, { backgroundColor: bg, borderColor: border }]}>
+    <View style={[styles.wrap, { backgroundColor: bg, borderColor: border }]} {...rest}>
       <Ionicons name="search" size={22} color={tint} style={{ marginLeft: 10, marginRight: 8 }} />
       <TextInput
         value={value}

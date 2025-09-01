@@ -185,6 +185,9 @@ export default function LocationModal({ visible, userId, onClose, onSaved }: Pro
             <Pressable
               onPress={handleSave}
               disabled={saving || !region}
+              accessibilityRole="button"
+              accessibilityLabel="Guardar"
+              testID="save-button"
               style={[s.btn, { backgroundColor: C.buttonPrimary, opacity: saving ? 0.7 : 1 }]}
             >
               {saving ? (

@@ -21,7 +21,12 @@ export default function AcceptedItem({ item, onMarkRead }: Props) {
       <View style={styles.header}>
         <Text style={[styles.title, { color: text }]}>{item.title}</Text>
         {onMarkRead && (
-          <Pressable onPress={() => onMarkRead(item.id)} hitSlop={8}>
+          <Pressable
+            testID="accepted-close"
+            accessibilityRole="button"
+            onPress={() => onMarkRead(item.id)}
+            hitSlop={8}
+          >
             <Ionicons name="close" size={18} color={text} />
           </Pressable>
         )}
