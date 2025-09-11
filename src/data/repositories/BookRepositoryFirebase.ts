@@ -324,7 +324,11 @@ export class BookRepositoryFirebase implements BookRepository {
   async getLoansByBorrower(
     borrowerId: string,
     opts: { activeOnly?: boolean; limit?: number } = {},
-  ): Promise<(Loan & { book: Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status'> })[]> {
+  ): Promise<
+    (Loan & {
+      book: Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status' | 'returnRequested'>;
+    })[]
+  > {
     const { activeOnly = false, limit: lim } = opts;
 
     let qRef = query(
@@ -366,7 +370,7 @@ export class BookRepositoryFirebase implements BookRepository {
 
     const bookMap = new Map<
       string,
-      Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status'>
+      Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status' | 'returnRequested'>
     >();
     for (const ch of chunks) {
       const booksSnap = await getDocs(
@@ -381,6 +385,7 @@ export class BookRepositoryFirebase implements BookRepository {
           author: x.author,
           imageUrl: x.imageUrl,
           status: x.status ?? 'available',
+          returnRequested: x.returnRequested,
         });
       });
     }
@@ -393,6 +398,7 @@ export class BookRepositoryFirebase implements BookRepository {
         author: '',
         imageUrl: '',
         status: 'available',
+        returnRequested: false,
       },
     }));
     console.log('Final loans:', finalLoans);
@@ -428,39 +434,6 @@ export class BookRepositoryFirebase implements BookRepository {
         requestedAt: null,
         currentLoanId: null,
         cancelledByBorrower: true,
-        updatedAt: serverTimestamp(),
-      });
-    });
-  }
-
-  async returnBook(bookId: string, borrowerId: string): Promise<void> {
-    const bookRef = doc(db, 'books', bookId);
-
-    await runTransaction(db, async (tx) => {
-      const bookSnap = await tx.get(bookRef);
-      if (!bookSnap.exists()) throw new Error('Libro no existe');
-      const b = bookSnap.data() as any;
-
-      if (b.status !== 'loaned') throw new Error('El libro no está prestado');
-      if (b.borrowerId !== borrowerId) throw new Error('No eres el prestatario');
-      if (!b.currentLoanId) throw new Error('No hay préstamo activo');
-
-      const loanRef = loanDocRef(bookId, b.currentLoanId);
-      const loanSnap = await tx.get(loanRef);
-      if (!loanSnap.exists()) throw new Error('Préstamo no encontrado');
-
-      tx.update(loanRef, {
-        status: 'returned',
-        active: false,
-        returnedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      tx.update(bookRef, {
-        status: 'available',
-        borrowerId: null,
-        requestedAt: null,
-        currentLoanId: null,
         updatedAt: serverTimestamp(),
       });
     });
@@ -528,6 +501,99 @@ export class BookRepositoryFirebase implements BookRepository {
         borrowerId: null,
         requestedAt: null,
         currentLoanId: null,
+        updatedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  async requestReturn(bookId: string, borrowerId: string): Promise<void> {
+    const bookRef = doc(db, 'books', bookId);
+
+    await runTransaction(db, async (tx) => {
+      const bookSnap = await tx.get(bookRef);
+      if (!bookSnap.exists()) throw new Error('Libro no existe');
+      const b = bookSnap.data() as any;
+
+      if (b.status !== 'loaned') throw new Error('El libro no está prestado');
+      if (b.borrowerId !== borrowerId) throw new Error('No eres el prestatario');
+      if (!b.currentLoanId) throw new Error('No hay préstamo activo');
+      if (b.returnRequested === true) return;
+
+      const loanRef = loanDocRef(bookId, b.currentLoanId);
+      const loanSnap = await tx.get(loanRef);
+      if (!loanSnap.exists()) throw new Error('Préstamo no encontrado');
+
+      tx.update(loanRef, {
+        returnRequestedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      tx.update(bookRef, {
+        returnRequested: true,
+        updatedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  async confirmReturn(bookId: string, ownerId: string): Promise<void> {
+    const bookRef = doc(db, 'books', bookId);
+
+    await runTransaction(db, async (tx) => {
+      const bookSnap = await tx.get(bookRef);
+      if (!bookSnap.exists()) throw new Error('Libro no existe');
+      const b = bookSnap.data() as any;
+
+      if (b.ownerId !== ownerId) throw new Error('No eres el dueño');
+      if (b.status !== 'loaned') throw new Error('El libro no está prestado');
+      if (b.returnRequested !== true) throw new Error('No hay devolución pendiente de confirmar');
+      if (!b.currentLoanId) throw new Error('No hay préstamo activo');
+
+      const loanRef = loanDocRef(bookId, b.currentLoanId);
+      const loanSnap = await tx.get(loanRef);
+      if (!loanSnap.exists()) throw new Error('Préstamo no encontrado');
+
+      tx.update(loanRef, {
+        status: 'returned',
+        active: false,
+        returnedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      tx.update(bookRef, {
+        status: 'available',
+        borrowerId: null,
+        requestedAt: null,
+        currentLoanId: null,
+        returnRequested: false,
+        updatedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  async rejectReturn(bookId: string, ownerId: string): Promise<void> {
+    const bookRef = doc(db, 'books', bookId);
+
+    await runTransaction(db, async (tx) => {
+      const bookSnap = await tx.get(bookRef);
+      if (!bookSnap.exists()) throw new Error('Libro no existe');
+      const b = bookSnap.data() as any;
+
+      if (b.ownerId !== ownerId) throw new Error('No eres el dueño');
+      if (b.status !== 'loaned') throw new Error('El libro no está prestado');
+      if (b.returnRequested !== true) throw new Error('No hay devolución pendiente');
+      if (!b.currentLoanId) throw new Error('No hay préstamo activo');
+
+      const loanRef = loanDocRef(bookId, b.currentLoanId);
+      const loanSnap = await tx.get(loanRef);
+      if (!loanSnap.exists()) throw new Error('Préstamo no encontrado');
+
+      tx.update(loanRef, {
+        returnRejectedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      tx.update(bookRef, {
+        returnRequested: false,
         updatedAt: serverTimestamp(),
       });
     });

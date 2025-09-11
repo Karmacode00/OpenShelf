@@ -10,7 +10,9 @@ export function makeBookRepoMock(overrides?: Partial<jest.Mocked<BookRepository>
     getByBorrower: jest.fn(),
     getLoansByBorrower: jest.fn(),
     cancelRequest: jest.fn(),
-    returnBook: jest.fn(),
+    requestReturn: jest.fn(),
+    rejectReturn: jest.fn(),
+    confirmReturn: jest.fn(),
     acceptRequest: jest.fn(),
     rejectRequest: jest.fn(),
   };

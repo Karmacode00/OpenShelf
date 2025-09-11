@@ -16,4 +16,5 @@ export type Loan = {
   loanedAt?: Date;
   returnedAt?: Date;
   dueDate?: Date;
+  returnRequestedAt?: Date;
 };

@@ -4,7 +4,14 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { geohashForLocation } from 'geofire-common';
 import fetch from 'node-fetch';
 
-type NotificationType = 'solicitud' | 'aceptado' | 'rechazado' | 'devuelto';
+type NotificationType =
+  | 'solicitud'
+  | 'aceptado'
+  | 'rechazado'
+  | 'devuelto'
+  | 'confirma_devolucion'
+  | 'rechaza_devolucion'
+  | 'devuelto_borrower';
 
 admin.initializeApp();
 
@@ -108,21 +115,87 @@ export const onBookRejected = onDocumentUpdated('books/{bookId}', async (event) 
   }
 });
 
+export const onReturnRequested = onDocumentUpdated('books/{bookId}', async (event) => {
+  try {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    const becamePending =
+      before.status === 'loaned' && !before.returnRequested && after.returnRequested === true;
+    if (!becamePending) return;
+
+    const borrowerSnap = await admin.firestore().doc(`users/${after.borrowerId}`).get();
+    const borrowerName = borrowerSnap.get('displayName') || 'El usuario';
+
+    await sendUserNotification({
+      userId: after.ownerId,
+      title: 'Confirmar devolución',
+      body: `${borrowerName} indica que devolvió "${after.title}". ¿Puedes confirmarlo?`,
+      data: {
+        bookId: event.params.bookId,
+        bookTitle: after.title,
+        borrowerId: after.borrowerId,
+        userName: borrowerName,
+      },
+      type: 'confirma_devolucion',
+    });
+  } catch (err) {
+    console.error('[onReturnRequested] Error:', err);
+  }
+});
+
+export const onReturnRejected = onDocumentUpdated('books/{bookId}', async (event) => {
+  try {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    const wasPending = before.status === 'loaned' && !!before.returnRequested;
+    const nowLoanedNoFlag = after.status === 'loaned' && !after.returnRequested;
+    if (!(wasPending && nowLoanedNoFlag)) return;
+
+    const ownerSnap = await admin.firestore().doc(`users/${after.ownerId}`).get();
+    const ownerName = ownerSnap.get('displayName') || 'El dueño';
+
+    await sendUserNotification({
+      userId: before.borrowerId,
+      title: 'Devolución rechazada',
+      body: `${ownerName} indicó que aún no ha recibido "${after.title}". Continúa coordinando la entrega.`,
+      data: {
+        bookId: event.params.bookId,
+        bookTitle: after.title,
+        ownerId: after.ownerId,
+        ownerName,
+      },
+      type: 'rechaza_devolucion',
+    });
+  } catch (err) {
+    console.error('[onReturnRejected] Error:', err);
+  }
+});
+
 export const onBookReturned = onDocumentUpdated('books/{bookId}', async (event) => {
   try {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (!before || !after) return;
 
-    const isReturn =
+    const isConfirmedReturn =
       before.status === 'loaned' &&
       after.status === 'available' &&
       before.borrowerId &&
-      !after.borrowerId;
-    if (!isReturn) return;
+      !after.borrowerId &&
+      before.returnRequested === true;
+
+    if (!isConfirmedReturn) return;
 
     const borrowerSnap = await admin.firestore().doc(`users/${before.borrowerId}`).get();
     const borrowerName = borrowerSnap.get('displayName') || 'El usuario';
+
+    const ownerSnap = await admin.firestore().doc(`users/${after.ownerId}`).get();
+    const ownerName = ownerSnap.get('displayName') || 'El dueño';
+    const ownerEmail = ownerSnap.get('email') || 'sin correo';
 
     await sendUserNotification({
       userId: after.ownerId,
@@ -135,6 +208,20 @@ export const onBookReturned = onDocumentUpdated('books/{bookId}', async (event) 
         userName: borrowerName,
       },
       type: 'devuelto',
+    });
+
+    await sendUserNotification({
+      userId: before.borrowerId,
+      title: 'Gracias por devolver el libro',
+      body: `Devolviste "${after.title}". ¿Cómo fue tu experiencia con ${ownerName}?`,
+      data: {
+        bookId: event.params.bookId,
+        bookTitle: after.title,
+        ownerId: after.ownerId,
+        ownerName,
+        ownerEmail,
+      },
+      type: 'devuelto_borrower',
     });
   } catch (err) {
     console.error('[onBookReturned] Error:', err);

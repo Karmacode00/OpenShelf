@@ -5,16 +5,22 @@ import NotificationItemBase from './NotificationItemBase';
 import { useThemeColor } from '@hooks/useThemeColor';
 
 import InlineButton from '@/components/InlineButton';
-import { NotifDevuelto } from '@/types/notifications';
+import { NotifDevuelto, NotifDevueltoBorrower } from '@/types/notifications';
 
 type Props = {
-  item: NotifDevuelto;
-  onRateUser: (borrowerId: string, borrowerName: string) => void;
+  item: NotifDevuelto | NotifDevueltoBorrower;
+  onRateUser: (targetId: string, targetName: string) => void;
+  resolveTarget?: (item: any) => { id: string; name: string };
 };
 
-export default function ReturnedItem({ item, onRateUser }: Props) {
+export default function ReturnedItem({ item, onRateUser, resolveTarget }: Props) {
   const text = useThemeColor({}, 'textContrast');
-  const { borrowerId, userName } = item.data;
+
+  const fallback = {
+    id: 'borrowerId' in item.data ? item.data.borrowerId : item.data.ownerId,
+    name: 'userName' in item.data ? item.data.userName : item.data.ownerName,
+  };
+  const target = resolveTarget ? resolveTarget(item) : fallback;
 
   return (
     <NotificationItemBase unread={item.unread}>
@@ -23,7 +29,7 @@ export default function ReturnedItem({ item, onRateUser }: Props) {
       <InlineButton
         label="Calificar usuario"
         variant="info"
-        onPress={() => onRateUser(borrowerId, userName)}
+        onPress={() => onRateUser(target.id, target.name)}
         style={{ marginTop: 10 }}
       />
     </NotificationItemBase>

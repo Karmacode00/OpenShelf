@@ -26,9 +26,15 @@ export interface BookRepository {
   getLoansByBorrower(
     borrowerId: string,
     opts?: { activeOnly?: boolean; limit?: number },
-  ): Promise<(Loan & { book: Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status'> })[]>;
+  ): Promise<
+    (Loan & {
+      book: Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status' | 'returnRequested'>;
+    })[]
+  >;
   cancelRequest(bookId: string, borrowerId: string): Promise<void>;
-  returnBook(bookId: string, borrowerId: string): Promise<void>;
   acceptRequest(bookId: string, ownerId: string): Promise<void>;
   rejectRequest(bookId: string, ownerId: string): Promise<void>;
+  requestReturn(bookId: string, borrowerId: string): Promise<void>;
+  confirmReturn(bookId: string, ownerId: string): Promise<void>;
+  rejectReturn(bookId: string, ownerId: string): Promise<void>;
 }

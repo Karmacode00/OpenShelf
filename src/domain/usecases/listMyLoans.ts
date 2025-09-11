@@ -4,7 +4,7 @@ import type { Book } from '@/domain/entities/Book';
 import type { BookRepository } from '@/domain/repositories/BookRepository';
 
 export type LoanWithBook = Loan & {
-  book: Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status'>;
+  book: Pick<Book, 'id' | 'title' | 'author' | 'imageUrl' | 'status' | 'returnRequested'>;
 };
 
 export function listMyLoansUseCase(repo: BookRepository) {

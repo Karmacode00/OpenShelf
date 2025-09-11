@@ -5,7 +5,7 @@ import { useFeedback } from '@/contexts/FeedbackContext';
 import { getBookRepository } from '@/di/container';
 import { cancelRequestUseCase } from '@/domain/usecases/cancelRequest';
 import { listMyLoansUseCase, LoanWithBook } from '@/domain/usecases/listMyLoans';
-import { returnBookUseCase } from '@/domain/usecases/returnBook';
+import { requestReturnBookUseCase } from '@/domain/usecases/requestReturnBook';
 
 export function useLoans() {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ export function useLoans() {
   const repo = useMemo(() => getBookRepository(), []);
   const listMyLoans = useMemo(() => listMyLoansUseCase(repo), [repo]);
   const cancelRequest = useMemo(() => cancelRequestUseCase(repo), [repo]);
-  const returnBook = useMemo(() => returnBookUseCase(repo), [repo]);
+  const returnBook = useMemo(() => requestReturnBookUseCase(repo), [repo]);
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<LoanWithBook[]>([]);
@@ -69,10 +69,10 @@ export function useLoans() {
       showLoading('');
       await returnBook({ bookId, borrowerId: user.uid });
       setItems((prev) => prev.filter((b) => b.id !== bookId));
-      showSuccess('Libro devuelto');
+      showSuccess('Notificación enviada');
     } catch (e: any) {
       console.error(e);
-      showError(e?.message ?? 'No se pudo devolver');
+      showError(e?.message ?? 'No se pudo notificar al dueño');
     } finally {
       setItemLoading(bookId, false);
     }

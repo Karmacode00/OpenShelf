@@ -286,7 +286,7 @@ describe('BookRepositoryFirebase • transacciones', () => {
     );
   });
 
-  it('returnBook: borrower correcto devuelve → loan returned/active:false; book available y limpia', async () => {
+  it('requestReturnBook: borrower correcto devuelve → loan returned/active:false; book returnRequested y limpia', async () => {
     let capturedTx: any;
 
     (fs.runTransaction as jest.Mock).mockImplementation(async (_db, cb) => {
@@ -311,7 +311,7 @@ describe('BookRepositoryFirebase • transacciones', () => {
       return cb(tx);
     });
 
-    await expect(repo.returnBook('r1', 'borrowZ')).resolves.toBeUndefined();
+    await expect(repo.requestReturn('r1', 'borrowZ')).resolves.toBeUndefined();
 
     expect(capturedTx.update).toHaveBeenCalledTimes(2);
 
@@ -319,9 +319,7 @@ describe('BookRepositoryFirebase • transacciones', () => {
     expect(loanRefArg._path).toBe('/books/r1/loans/loanR');
     expect(loanBody).toEqual(
       expect.objectContaining({
-        status: 'returned',
-        active: false,
-        returnedAt: 'server-ts',
+        returnRequestedAt: 'server-ts',
         updatedAt: 'server-ts',
       }),
     );
@@ -330,10 +328,7 @@ describe('BookRepositoryFirebase • transacciones', () => {
     expect(bookRefArg._path).toBe('/books/r1');
     expect(bookBody).toEqual(
       expect.objectContaining({
-        status: 'available',
-        borrowerId: null,
-        requestedAt: null,
-        currentLoanId: null,
+        returnRequested: true,
         updatedAt: 'server-ts',
       }),
     );

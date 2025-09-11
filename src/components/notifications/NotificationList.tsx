@@ -6,7 +6,8 @@ import RejectedItem from './RejectedItem';
 import RequestItem from './RequestItem';
 import ReturnedItem from './ReturnedItem';
 
-import { AppNotification } from '@/types/notifications';
+import { AppNotification, NotifDevueltoBorrower } from '@/types/notifications';
+import ConfirmReturnItem from './ConfirmReturnItem';
 
 type Props = {
   items: AppNotification[];
@@ -14,6 +15,8 @@ type Props = {
   onAcceptRequest: (bookId: string, notificationId: string) => void;
   onRejectRequest: (bookId: string, notificationId: string) => void;
   onRateUser: (borrowerId: string, borrowerName: string, notificationId: string) => void;
+  onConfirmReturn: (bookId: string, notificationId: string, confirmation: boolean) => void;
+  onRateOwner: (ownerId: string, ownerName: string, notificationId: string) => void;
 };
 
 export default function NotificationList({
@@ -22,6 +25,8 @@ export default function NotificationList({
   onAcceptRequest,
   onRejectRequest,
   onRateUser,
+  onConfirmReturn,
+  onRateOwner,
 }: Props) {
   return (
     <FlatList
@@ -36,6 +41,7 @@ export default function NotificationList({
             );
           case 'aceptado':
             return <AcceptedItem item={item} onMarkRead={onMarkRead} />;
+          case 'rechaza_devolucion':
           case 'rechazado':
             return <RejectedItem item={item} />;
           case 'devuelto':
@@ -47,6 +53,28 @@ export default function NotificationList({
                 }
               />
             );
+          case 'confirma_devolucion': {
+            return (
+              <ConfirmReturnItem
+                item={item}
+                onConfirmReturn={(bookId, notifId, confirmed) =>
+                  onConfirmReturn(bookId, notifId, confirmed)
+                }
+              />
+            );
+          }
+          case 'devuelto_borrower': {
+            return (
+              <ReturnedItem
+                item={item}
+                resolveTarget={(x: NotifDevueltoBorrower) => ({
+                  id: x.data.ownerId,
+                  name: x.data.ownerName,
+                })}
+                onRateUser={(ownerId, ownerName) => onRateOwner(ownerId, ownerName, item.id)}
+              />
+            );
+          }
           default:
             return null;
         }

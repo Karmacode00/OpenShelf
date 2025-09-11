@@ -4,10 +4,10 @@ import { StyleSheet, Text } from 'react-native';
 import NotificationItemBase from './NotificationItemBase';
 import { useThemeColor } from '@hooks/useThemeColor';
 
-import { NotifRechazado } from '@/types/notifications';
+import { NotifRechazado, NotifRechazarDevolucion } from '@/types/notifications';
 
 type Props = {
-  item: NotifRechazado;
+  item: NotifRechazado | NotifRechazarDevolucion;
 };
 
 export default function RejectedItem({ item }: Props) {

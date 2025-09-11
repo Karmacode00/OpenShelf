@@ -1,6 +1,6 @@
 import { makeBookRepoMock } from '@testutils/makeBookRepoMock';
 
-import { returnBookUseCase } from '@/domain/usecases/returnBook';
+import { requestReturnBookUseCase } from '@/domain/usecases/requestReturnBook';
 
 describe('usecase: returnBookUseCase', () => {
   const bookId = 'book-1';
@@ -8,20 +8,20 @@ describe('usecase: returnBookUseCase', () => {
 
   it('llama repo.returnBook(bookId, borrowerId)', async () => {
     const repo = makeBookRepoMock({
-      returnBook: jest.fn().mockResolvedValue(undefined),
+      requestReturn: jest.fn().mockResolvedValue(undefined),
     });
 
-    const returnBook = returnBookUseCase(repo);
-    await expect(returnBook({ bookId, borrowerId })).resolves.toBeUndefined();
-    expect(repo.returnBook).toHaveBeenCalledWith(bookId, borrowerId);
+    const requestReturnBook = requestReturnBookUseCase(repo);
+    await expect(requestReturnBook({ bookId, borrowerId })).resolves.toBeUndefined();
+    expect(repo.requestReturn).toHaveBeenCalledWith(bookId, borrowerId);
   });
 
   it('propaga errores del repositorio', async () => {
     const repo = makeBookRepoMock({
-      returnBook: jest.fn().mockRejectedValue(new Error('NOT_LOANED')),
+      requestReturn: jest.fn().mockRejectedValue(new Error('NOT_LOANED')),
     });
 
-    const returnBook = returnBookUseCase(repo);
-    await expect(returnBook({ bookId, borrowerId })).rejects.toThrow(/NOT_LOANED/);
+    const requestReturnBook = requestReturnBookUseCase(repo);
+    await expect(requestReturnBook({ bookId, borrowerId })).rejects.toThrow(/NOT_LOANED/);
   });
 });

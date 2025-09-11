@@ -1,6 +1,13 @@
 export type NotificationBase = {
   id: string;
-  type: 'solicitud' | 'aceptado' | 'rechazado' | 'devuelto';
+  type:
+    | 'solicitud'
+    | 'aceptado'
+    | 'rechazado'
+    | 'devuelto'
+    | 'confirma_devolucion'
+    | 'rechaza_devolucion'
+    | 'devuelto_borrower';
   unread: boolean;
   createdAt?: any;
   title: string;
@@ -45,4 +52,42 @@ export type NotifDevuelto = NotificationBase & {
   };
 };
 
-export type AppNotification = NotifSolicitud | NotifAceptado | NotifRechazado | NotifDevuelto;
+export type NotifConfirmarDevolucion = NotificationBase & {
+  type: 'confirma_devolucion';
+  data: {
+    userName: string;
+    borrowerId: string;
+    bookTitle: string;
+    bookId: string;
+  };
+};
+
+export type NotifRechazarDevolucion = NotificationBase & {
+  type: 'rechaza_devolucion';
+  data: {
+    ownerId: string;
+    ownerName: string;
+    bookTitle: string;
+    bookId: string;
+  };
+};
+
+export type NotifDevueltoBorrower = NotificationBase & {
+  type: 'devuelto_borrower';
+  data: {
+    ownerId: string;
+    ownerName: string;
+    ownerEmail: string;
+    bookTitle: string;
+    bookId: string;
+  };
+};
+
+export type AppNotification =
+  | NotifSolicitud
+  | NotifAceptado
+  | NotifRechazado
+  | NotifDevuelto
+  | NotifConfirmarDevolucion
+  | NotifRechazarDevolucion
+  | NotifDevueltoBorrower;

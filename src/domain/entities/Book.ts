@@ -15,4 +15,5 @@ export type Book = {
     formattedAddress: string | null;
   };
   geohash: string;
+  returnRequested?: boolean;
 };

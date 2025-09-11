@@ -12,8 +12,15 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function NotificationsScreen() {
   const { user } = useAuth();
-  const { items, handleAccept, handleReject, handleRate, handleRead, markRead } =
-    useNotifications();
+  const {
+    items,
+    handleAccept,
+    handleConfirmReturn,
+    handleReject,
+    handleRate,
+    handleRead,
+    markRead,
+  } = useNotifications();
 
   const [ratingVisible, setRatingVisible] = useState(false);
   const [selected, setSelected] = useState<{ uid: string; name: string; notifId: string } | null>(
@@ -26,7 +33,9 @@ export default function NotificationsScreen() {
   useFocusEffect(
     useCallback(() => {
       return () => {
-        const toMark = items.filter((n) => n.unread && n.type === 'rechazado');
+        const toMark = items.filter(
+          (n) => n.unread && (n.type === 'rechazado' || n.type === 'rechaza_devolucion'),
+        );
         if (toMark.length > 0) {
           Promise.all(toMark.map((n) => markRead(n.id))).catch((e) =>
             console.error('Auto mark rejected notifications failed:', e),
@@ -64,7 +73,12 @@ export default function NotificationsScreen() {
             setSelected({ uid: borrowerId, name: borrowerName, notifId });
             setRatingVisible(true);
           }}
+          onRateOwner={(ownerId, ownerNameName, notifId) => {
+            setSelected({ uid: ownerId, name: ownerNameName, notifId });
+            setRatingVisible(true);
+          }}
           onMarkRead={handleRead}
+          onConfirmReturn={handleConfirmReturn}
         />
 
         <RatingModal

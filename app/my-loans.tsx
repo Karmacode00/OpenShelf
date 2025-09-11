@@ -20,10 +20,16 @@ export default function LoansScreen() {
 
   const renderItem = ({ item }: { item: LoanWithBook }) => {
     const isRequested = item.status === 'requested';
+
+    const inReturnProcess = item.book.returnRequested === true;
     const isLoaned = item.status === 'loaned';
     const isLoading = !!loadingById[item.id];
 
-    const label = isRequested ? 'Cancelar solicitud' : isLoaned ? 'Devolver' : undefined;
+    const label = isRequested
+      ? 'Cancelar solicitud'
+      : isLoaned && !inReturnProcess
+        ? 'Devolver'
+        : undefined;
     const onPress = isRequested
       ? () => handleCancel(item.book.id)
       : isLoaned
@@ -35,9 +41,11 @@ export default function LoansScreen() {
         title={item.book.title}
         author={item.book.author}
         imageUrl={item.book.imageUrl}
-        showActionButton={!!label}
+        showActionButton={!!label || inReturnProcess}
         actionLabel={label}
-        actionStatus={isLoading ? 'Loading' : isRequested ? 'Pendiente' : 'Devolver'}
+        actionStatus={
+          isLoading ? 'Loading' : isRequested || inReturnProcess ? 'Pendiente' : 'Devolver'
+        }
         onActionPress={onPress}
       />
     );

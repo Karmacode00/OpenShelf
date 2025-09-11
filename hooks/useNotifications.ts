@@ -16,6 +16,8 @@ import { getBookRepository, getUserRepository } from '@/di/container';
 import { acceptRequestUseCase } from '@/domain/usecases/acceptRequest';
 import { rateUserUseCase } from '@/domain/usecases/rateUser';
 import { rejectRequestUseCase } from '@/domain/usecases/rejectRequest';
+import { confirmReturnUseCase } from '@/domain/usecases/confirmReturn';
+import { rejectReturnUseCase } from '@/domain/usecases/rejectReturn';
 import { db } from '@/services/firebase';
 import { AppNotification } from '@/types/notifications';
 
@@ -28,8 +30,11 @@ export function useNotifications() {
 
   const repo = useMemo(() => getBookRepository(), []);
   const userRepo = useMemo(() => getUserRepository(), []);
+
   const acceptRequest = useMemo(() => acceptRequestUseCase(repo), [repo]);
   const rejectRequest = useMemo(() => rejectRequestUseCase(repo), [repo]);
+  const confirmReturn = useMemo(() => confirmReturnUseCase(repo), [repo]);
+  const rejectReturn = useMemo(() => rejectReturnUseCase(repo), [repo]);
   const rateUser = useMemo(() => rateUserUseCase(userRepo), [userRepo]);
 
   const markRead = useCallback(
@@ -140,6 +145,29 @@ export function useNotifications() {
     }
   };
 
+  const handleConfirmReturn = async (bookId: string, notifId: string, confirmed: boolean) => {
+    if (!user?.uid) return;
+    showLoading('');
+    try {
+      if (confirmed) {
+        await confirmReturn({ bookId, ownerId: user.uid });
+        showSuccess('Devolución confirmada');
+      } else {
+        await rejectReturn({ bookId, ownerId: user.uid });
+        showSuccess('Devolución rechazada exitosamente');
+      }
+      await markRead(notifId);
+      await load();
+    } catch (e) {
+      console.error(e);
+      showError(
+        confirmed ? 'No se pudo confirmar la devolución' : 'No se pudo rechazar la devolución',
+      );
+    } finally {
+      hide();
+    }
+  };
+
   const handleRate = async (
     raterId: string,
     ratedId: string,
@@ -181,6 +209,7 @@ export function useNotifications() {
     markRead,
     handleAccept,
     handleReject,
+    handleConfirmReturn,
     handleRate,
     handleRead,
   };
